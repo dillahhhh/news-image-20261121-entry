@@ -1,32 +1,30 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.2 (brief rev8.2).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.3 (brief rev8.3).
 
-v8.2 = polish atas v8.1 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
-28 reguler 4x7). IDE UTAMA: judul menampung fakta — TANPA ubah geometri
-(GRID_ROWS, SEC_H, HEADER_H, gap semua TETAP v8.1). Perubahan vs v8.1
-(brief rev8.2, A-C):
-- teks: #2 judul "Rusia Serang Kryvyi Rih" (2 baris; pelaku kembali) +
-  badan 3 baris ("~60 luka" dicabut); #6 judul "S&P Anjlok −3,7%";
-  #10 judul "Sparta II Terbakar" + badan "16 selamat; Finlandia duga
-  Ukraina."; #13 judul "Nyamuk Wolbachia" + badan "Tekan dengue -69%;
-  studi 4 thn, 5.700 anak; belum peer-review."; #16 judul "Riyadh
-  Dicegat" (badan tetap); #29 judul "Denmark Usir Atase Rusia" + badan
-  "Duga plot bunuh rapper Kyivstoner; Rusia bantah."; #27 badan
-  "Roma 5-1 Parma"; #34 badan "game 50+ ke-26".
-- footer: l1 + src1 naik ke f(11) dgn redaksi dipadatkan (l1 979,1px,
-  src1 988,4px — keduanya <=990px); src2 "Indeci" -> "INDECI".
-- peta: LAND tambah dot pantai timur AS (baris 6-8, kolom 19-22)
-  sehingga pin #6 duduk DI ATAS dot darat (jarak dot terdekat 3,4px).
+v8.3 = polish atas v8.2 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 6 edit teks + percobaan footer — TANPA ubah geometri
+(GRID_ROWS, SEC_H, HEADER_H, gap semua TETAP v8.1/v8.2). Perubahan vs v8.2
+(brief rev8.3, A-B):
+- teks: #2 badan "2 tewas, ~60 luka; penyelamat diserang." (2 baris;
+  usia dibuang — pluralitas ronde v8.2 minta "~60 luka" kembali);
+  #10 judul "Sparta II Kena drone" + badan "Kapal Rusia; 16 selamat;
+  Finlandia duga Ukraina."; #13 badan "Tekan dengue −69%; ..." (minus
+  U+2212, seragam dgn #6); #16 judul "Cegat Rudal Riyadh" (badan + tag
+  [RESMI] tetap); #27 badan tanpa "Mora 71';" (baris ke-2 137,5px);
+  #34 badan "laga 50+ poin ke-26".
+- footer: l1 "yang"/"Jumat" dipulihkan (dana: "beda" -> "≠", 985,6px);
+  src1 "Sky News" dipulihkan (dana: "InfoLiveScore" -> "ILS", 963,9px);
+  label "SRC: " dipertahankan; "INDECI" tetap.
 
-DEVIASI TERUKUR vs brief rev8.2 (semua dilaporkan ke parent):
-#2 judul target "Rusia Hantam Kryvyi Rih" = 3 baris ("Rusia Hantam"
-188,7px > anggaran 182px) -> dipakai "Rusia Serang Kryvyi Rih"
-(2 baris, maks 178,5px; aktor + kata kerja + tempat utuh).
-Footer src1: label "SUMBER: " -> "SRC: " (53,5px -> 29,0px),
-"Sky News" -> "Sky", "InfoLiveScore, theScore" ->
-"InfoLiveScore/theScore" — SEMUA outlet tetap disebut; "Sky" memetakan
-ke kode meta SKY. l1: "yang" -> "yg", "penutupan pasar" -> "pasar tutup",
-buang "(UTC)" kedua, "Jumat" -> "Jum" (979,1px di f(11)).
+DEVIASI TERUKUR vs brief rev8.3 (semua dilaporkan ke parent):
+#10 judul target "Sparta II Kena Drone" = 235,4px > anggaran 235px
+(lebih 0,4px) -> dipakai "Sparta II Kena drone" (233,1px; 'd' kecil).
+#16 judul target "Rudal Riyadh Dicegat" = 241,9px > 235px (alternatif
+Kimi "Riyadh: Rudal Dicegat" 249,9px) -> dipakai "Cegat Rudal Riyadh"
+(221,2px; kata kerja + objek + tempat, tak ambigu).
+Footer src1: hapus label "SRC: " saja TIDAK cukup (992,7px, masih lebih
+2,7px) -> "InfoLiveScore" disingkat ke kode meta "ILS" (963,9px; nama
+penuh tetap ada di src2 "Skor olahraga: InfoLiveScore, theScore").
 
 GEOMETRI (total HARUS 1024 — di-assert di render):
 header 58 + gap 0 + strip 42 + gap 0 + lead 118 + gap 0 + sekunder 142
@@ -39,7 +37,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_2 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_3 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
@@ -332,8 +330,9 @@ def draw_lead(draw, x, y):
 
 def draw_secondary(draw, x, y):
     """5 kartu sekunder #2-6 (w 194, judul 24px, isi 16px SEMUA).
-    Badan: #2 3 baris (v8.2, ruang bawah 19px), #5 4 baris, #3/#6 3 baris,
-    #4 2 baris (terukur). Leading 17px; badan berakhir y+140 max (SEC_H 142)."""
+    Badan: #2 2 baris (v8.3, berakhir 72+2*17=106px, ruang bawah 36px),
+    #5 4 baris, #3/#6 3 baris, #4 2 baris (terukur). Leading 17px;
+    badan berakhir y+140 max (SEC_H 142)."""
     for i, s in enumerate(STORIES[1:6]):
         cx = x + i * (SEC_W + SEC_GAP)
         draw.rectangle([cx, y, cx + SEC_W - 1, y + SEC_H - 1],
@@ -383,14 +382,15 @@ def draw_regular(draw, x, y):
             draw.text((cx + 4, by + j * 17), ln, font=bf, fill=INK)
 
 def draw_footer(draw, y):
-    # L1: metodologi + aturan tanggal (brief E) — v8.2: 11px, redaksi
-    # dipadatkan agar muat <=990px (terukur 979,1px): "yang" -> "yg",
-    # "penutupan pasar" -> "pasar tutup", buang "(UTC)" kedua,
-    # "Jumat" -> "Jum". Isi utuh (34 cerita, UTC, klaim vs fakta resmi,
-    # jam strip terverifikasi, aturan tanggal 20->21 Nov, pasar tutup).
-    line1 = ("METODOLOGI — 34 cerita 21 Nov 2026 (UTC); klaim beda fakta "
+    # L1: metodologi + aturan tanggal — v8.3: 11px, kata lengkap
+    # dipulihkan (terukur 985,6px <= 990px): "yg" -> "yang",
+    # "Jum" -> "Jumat"; dananya "beda" -> "≠" ("klaim ≠ fakta resmi",
+    # 126,5px -> 108,3px). "Berita 21 Nov:" dipertahankan (bukan "Isi").
+    # Isi utuh (34 cerita, UTC, klaim vs fakta resmi, jam strip
+    # terverifikasi, aturan tanggal 20->21 Nov, pasar tutup).
+    line1 = ("METODOLOGI — 34 cerita 21 Nov 2026 (UTC); klaim ≠ fakta "
              "resmi; jam strip terverifikasi. Berita 21 Nov: peristiwa "
-             "20 Nov yg dilaporkan 21 Nov + pasar tutup Jum 21:00 UTC.")
+             "20 Nov yang dilaporkan 21 Nov + pasar tutup Jumat 21:00 UTC.")
     assert tw(draw, line1, f(11)) <= 990, f"footer l1 {tw(draw, line1, f(11)):.0f}px"
     draw.text((MARGIN, y + 0), line1, font=f(11), fill=MUTED)
     # L2: legenda region 11px (dot 12px + nama penuh).
@@ -402,14 +402,15 @@ def draw_footer(draw, y):
         draw.text((cx, y + 12), g, font=lf, fill=MUTED)
         cx += tw(draw, g, lf) + 8
     assert cx - MARGIN <= 990, "legenda region terlalu lebar"
-    # L3+L4: daftar sumber LENGKAP, nama penuh (brief E). v8.2: f(11),
-    # dipadatkan agar muat <=990px (terukur 988,4px): label "SUMBER: " ->
-    # "SRC: ", "Sky News" -> "Sky" (memetakan ke kode meta SKY),
-    # "InfoLiveScore, theScore" -> "InfoLiveScore/theScore". SEMUA outlet
-    # tetap disebut, nama penuh kecuali "Sky".
-    src1 = ("SRC: BBC, Reuters, AP, Al Jazeera, Guardian, DW, Sky, "
+    # L3+L4: daftar sumber LENGKAP, nama penuh (brief E). v8.3: f(11),
+    # "Sky News" dipulihkan (terukur 963,9px <= 990px); dananya
+    # "InfoLiveScore" -> "ILS" (kode meta; nama penuh tetap ada di src2
+    # "Skor olahraga: InfoLiveScore, theScore"). Hapus label "SRC: " saja
+    # TIDAK cukup (992,7px, masih lebih 2,7px) — label dipertahankan.
+    # SEMUA outlet tetap disebut.
+    src1 = ("SRC: BBC, Reuters, AP, Al Jazeera, Guardian, DW, Sky News, "
             "UPI, CBC, RFI, Middle East Eye, ICJ, USGS, UKMTO, Majik, "
-            "InfoLiveScore/theScore, Straits Times, Economic Times, "
+            "ILS/theScore, Straits Times, Economic Times, "
             "Truth Social")
     src2 = ("Data pasar: Equiti via Majik · Korban gempa: INDECI · "
             "Skor olahraga: InfoLiveScore, theScore")
