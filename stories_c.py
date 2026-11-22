@@ -4,19 +4,22 @@
 # 16/20px + meta/footer 8–12px kemungkinan hilang saat judge lihat
 # gambar downscale. Solusi: 16 cerita + teks jauh lebih besar + tier
 # atas jelas (lead #1 + sekunder #2–6 + grid reguler 2 kolom).
+# v9.1 (brief revC1, bos 23:15 WIB tap "Tukar 1 kartu olahraga ke #12"):
+# #34 (Harden) keluar, #12 (Deal UE-Indonesia) masuk — coverage lebih
+# seimbang (Asia-Pasifik ke-2 di samping #19); strip jadi 4 waktu.
 # 16 cerita DIPERTAHANKAN, teks = v8.14 PERSIS (judul, badan, tag, grup,
 # waktu, lon/lat, sumber — jangan ubah satu huruf pun):
 #   Tier atas (6): #1 (ICJ), #2 (Russia), #3 (Chapo Isidro), #4 (COP31
 #   Near-Deal), #5 (Iran Claims US Strike), #6 (S&P Plunges).
-#   Reguler (10): #7 (M6.7 Quake), #11 (Trump '1945, 2026'), #15 (3 Killed
-#   in Gaza), #16 (Riyadh Intercept), #19 (Shenzhen Summit), #20 (Missiles
-#   in Poland), #25 (Chelsea 1-4 Leeds), #26 (Newcastle 2-2 Arsenal),
-#   #33 (Tragedy in Nigeria), #34 (Harden 51 Points).
-#   TIDAK dipakai: #8, #9, #10, #12, #13, #14, #17, #18, #21, #22, #23,
-#   #24, #27, #28, #29, #30, #31, #32.
+#   Reguler (10): #7 (M6.7 Quake), #11 (Trump '1945, 2026'), #12 (Deal
+#   UE-Indonesia), #15 (3 Killed in Gaza), #16 (Riyadh Intercept),
+#   #19 (Shenzhen Summit), #20 (Missiles in Poland), #25 (Chelsea 1-4
+#   Leeds), #26 (Newcastle 2-2 Arsenal), #33 (Tragedy in Nigeria).
+#   TIDAK dipakai: #8, #9, #10, #13, #14, #17, #18, #21, #22, #23,
+#   #24, #27, #28, #29, #30, #31, #32, #34.
 # Alasan pilih: 6 teratas tetap (lead + sekunder, peta 6 pin tetap valid);
-# 10 reguler = berita terbesar + strip UTC tetap valid (#6 21:00, #7 00:09,
-# #25 15:00, #26 17:30, #34 03:23 — semuanya dipertahankan).
+# 10 reguler = berita terbesar + strip UTC 4 waktu (#6 21:00, #7 00:09,
+# #25 15:00, #26 17:30 — semuanya dipertahankan).
 # Tuple: (num, group, title, body, tag, time_utc_or_None, lon, lat, source)
 # Tag: FACT (hijau), CLAIM (amber), DATA (biru), DISPUTED (merah).
 # #16 tag TETAP FACT (tag = kepastian klaim UTAMA cegatan koalisi;
@@ -47,13 +50,16 @@ STORIES = [
     (6, "NORTH AMERICA", "S&P Plunges −3.7%",
      "S&P 500 -3.7%, Nasdaq -5.3%; Nvidia -14%.",
      "DATA", "21:00", -74.0, 40.7, "Majik"),
-    # 7–34 — REGULER (10 cerita, grid 2 kolom x 5 baris)
+    # 7–33 — REGULER (10 cerita, grid 2 kolom x 5 baris)
     (7, "LATIN AMERICA", "M6.7 Quake in Junin",
      "M6.7; 108 km (IGP: 129 km); 8 injured, no deaths.",
      "DISPUTED", "00:09", -75.0, -11.0, "USGS"),
     (11, "GLOBAL", "Trump: '1945, 2026'",
      "Yalta photo recast with Trump, Xi, Putin; debate over diplomacy.",
      "FACT", None, 116.4, 39.9, "Truth Social"),
+    (12, "ASIA-PACIFIC", "EU-Indonesia Deal",
+     "98.5% of tariff lines cut; deal targeted to take effect early 2027.",
+     "FACT", None, 106.8, -6.2, "DW"),
     (15, "MIDDLE EAST", "3 Killed in Gaza",
      "Food vehicle hit; 3 killed.",
      "FACT", None, 34.5, 31.5, "Al Jazeera"),
@@ -76,9 +82,6 @@ STORIES = [
     (33, "GLOBAL", "Tragedy in Nigeria",
      "Bayelsa boat capsizes; ≥24 dead, 24 survived.",
      "FACT", None, 6.3, 4.9, "Sky News"),
-    (34, "SPORTS", "Harden 51 Points",
-     "Cleveland beat Indiana 128-119. 26th 50-point game, passing Kobe.",
-     "FACT", "03:23", -81.7, 41.5, "AP"),
 ]
 
 # Warna titik region (dipakai badge meta + pin peta). Border kartu NETRAL.
@@ -101,8 +104,8 @@ PINS_V8_2 = [
     (1, 0, 0), (2, 0, -2), (3, 0, 0), (4, 0, 2), (5, 0, 0), (6, 0, 0),
 ]
 
-# Kartu reguler yg membawa jam di meta: #25/#26/#34 (sama seperti v8.14).
-TIME_IN_META = {25, 26, 34}
+# Kartu reguler yg membawa jam di meta: #25/#26 (sama seperti v8.14).
+TIME_IN_META = {25, 26}
 
 # Singkatan sumber untuk meta 12px (footer menulis nama penuh).
 SRC_SHORT = {

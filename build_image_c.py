@@ -7,22 +7,23 @@ kuota untuk A). Masalah: kepadatan — 34 kartu + teks 16/20px +
 meta/footer 8-12px kemungkinan hilang saat judge lihat gambar
 downscale. Solusi: 16 cerita + teks jauh lebih besar + tier atas jelas.
 - 16 cerita, teks = v8.14 PERSIS (lead #1 + sekunder #2-6 + 10 reguler
-  #7, #11, #15, #16, #19, #20, #25, #26, #33, #34). TIDAK dipakai:
-  #8, #9, #10, #12, #13, #14, #17, #18, #21, #22, #23, #24, #27,
-  #28, #29, #30, #31, #32.
+  #7, #11, #12, #15, #16, #19, #20, #25, #26, #33). TIDAK dipakai:
+  #8, #9, #10, #13, #14, #17, #18, #21, #22, #23, #24, #27,
+  #28, #29, #30, #31, #32, #34.
+  v9.1 (brief revC1, bos 23:15 WIB): #34 keluar, #12 masuk; strip 4 waktu.
 - Ukuran teks (Claude: kira-kira 2x lipat v8.14): judul reguler 28px
   bold (v8.14: 20px), badan reguler 18px (v8.14: 16px), meta/footer
   12px (v8.14: 8-12px). Judul sekunder 30px bold, badan sekunder 18px.
   Judul lead 36px bold, badan lead 18px. H1 30px bold, H2 14px.
 - Layout: header (H1 "16 DATE-CHECKED STORIES" + H2 "ALL STORIES
-  DATED") + strip UTC 5 waktu terverifikasi + lead #1 + peta 6 pin +
+  DATED") + strip UTC 4 waktu terverifikasi + lead #1 + peta 6 pin +
   sekunder #2-6 + grid reguler 2 kolom x 5 baris + footer (metodologi +
   legenda tag + legenda region + sumber HANYA 16 cerita yg dipakai).
 - Terukur parent (PIL + wrap()): H1 956,1px <= 990; lead title
   509,9px <= 620; lead body 18px 2 baris (605/372px, wrap 620);
   sekunder judul 2-3 baris @30 bold, badan max 5 baris (#5) @18px;
   reguler judul SEMUA 1 baris @28 bold, badan max 2 baris @18px;
-  meta terpanjang 213px (#25/#26); strip legend 791,3px @12 <= 990;
+  meta terpanjang 213px (#25/#26); strip legend 654,7px @12 <= 990;
   footer semua baris <= 990 @12px.
 - GEOMETRI (total HARUS 1024 — di-assert di render):
   header 58 + strip 44 + lead 118 + sekunder 218 + grid (5x98 + 4x2)
@@ -171,12 +172,11 @@ def draw_map(draw, x, y, w, h):
     return pts
 
 # ---- strip UTC: sumbu Jumat 21:00 -> Sabtu 24:00 UTC (27 jam) ----
-# 5 waktu terverifikasi (semuanya cerita yg dipertahankan):
-# #6 21:00, #7 00:09, #34 03:23, #25 15:00, #26 17:30.
+# 4 waktu terverifikasi (semuanya cerita yg dipertahankan):
+# #6 21:00, #7 00:09, #25 15:00, #26 17:30.
 STRIP_EVENTS = [  # (label, jam_dari_Jumat_21_00, warna)
     ("21:00 Wall St closes", 0.0, GREEN),
     ("00:09 Peru quake", 3.15, GREEN),
-    ("03:23 Harden 51 pts", 6.38, BLUE),
     ("15:00 Leeds KO", 18.0, RED),
     ("17:30 Newcastle KO", 20.5, RED),
 ]
@@ -201,14 +201,13 @@ def draw_strip(draw, y):
         draw.line([(tx, axis_y - 7), (tx, axis_y)], fill=col, width=3)
         draw.ellipse([tx - 3, axis_y - 3, tx + 3, axis_y + 3], fill=col)
     legend = ("FRI 21:00 Wall St closes → #6 · 00:09 Peru quake → #7 · "
-              "03:23 Harden → #34 · 15:00 Leeds KO → #25 · "
-              "17:30 Newcastle KO → #26")
+              "15:00 Leeds KO → #25 · 17:30 Newcastle KO → #26")
     assert tw(draw, legend, f(12)) <= 990, "legenda strip terlalu lebar"
     draw.text((x0, y + 30), legend, font=f(12), fill=MUTED)
 
 # ---- meta per kartu (format seragam v8.14, 12px bold) ----
 # Format: dot grup 12px + "N [TAG] · 21 NOV · SRC" (4 segmen) di SEMUA
-# kartu; #25/#26/#34 membawa "· HH:MM" sebagai satu-satunya pengecualian
+# kartu; #25/#26 membawa "· HH:MM" sebagai satu-satunya pengecualian
 # segmen ke-5 (jam, bukan region).
 META_FONT = 12
 META_DOT = 12
@@ -368,12 +367,12 @@ def draw_footer(draw, y):
         cx += tw(draw, g, lf) + 8
     assert cx - MARGIN <= 990, "legenda region terlalu lebar"
     # L4+L5: daftar sumber HANYA 16 cerita yg dipakai, nama penuh.
-    # v9 C: ICJ, AP, BBC, Majik, Al Jazeera, USGS, Truth Social,
-    # Middle East Eye, InfoLiveScore, Sky News (terukur 583,5px).
+    # v9.1 C: ICJ, AP, BBC, Majik, Al Jazeera, USGS, Truth Social,
+    # Middle East Eye, InfoLiveScore, Sky News, DW (terukur 612,2px).
     # src2: data pasar (#6 Majik), korban gempa (#7 INDECI), skor
-    # olahraga (#25/#26/#34 InfoLiveScore, theScore) — terukur 558,5px.
+    # olahraga (#25/#26 InfoLiveScore, theScore) — terukur 558,5px.
     src1 = ("SRC: ICJ, AP, BBC, Majik, Al Jazeera, USGS, Truth Social, "
-            "Middle East Eye, InfoLiveScore, Sky News")
+            "Middle East Eye, InfoLiveScore, Sky News, DW")
     src2 = ("Market data: Equiti via Majik · Quake victims: INDECI · "
             "Sports scores: InfoLiveScore, theScore")
     assert tw(draw, src1, f(12)) <= 990, f"footer src1 {tw(draw, src1, f(12)):.0f}px"
@@ -383,8 +382,8 @@ def draw_footer(draw, y):
 
 def render():
     assert len(STORIES) == 16, f"{len(STORIES)} cerita"
-    assert [s[0] for s in STORIES] == [1, 2, 3, 4, 5, 6, 7, 11, 15, 16,
-                                       19, 20, 25, 26, 33, 34], "nomor kartu"
+    assert [s[0] for s in STORIES] == [1, 2, 3, 4, 5, 6, 7, 11, 12, 15, 16,
+                                       19, 20, 25, 26, 33], "nomor kartu"
     for s in STORIES:
         assert s[4] in TAG_STYLE, f"tag #{s[0]} {s[4]}"
         assert s[8], f"kartu #{s[0]} tanpa sumber (16/16 wajib)"
