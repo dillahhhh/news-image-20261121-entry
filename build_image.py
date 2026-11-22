@@ -25,6 +25,21 @@ v2 (verdict Claude REVISI, 12:29 WIB 22 Nov):
   impact); no invented stories, timestamps, outlet names or confidence
   numbers. Estimates use ~.
 
+v3 (verdict Claude REVISI ringan atas v2, 12:46 WIB 22 Nov — 4 poin saja):
+- Tag [RESMI] yang bertentangan: dengue 13-1/13-2/13-3 -> [DATA]; 13-1
+  judul "Studi: Wolbachia Tekan Dengue" (atribusi); 11-3 -> [INFO];
+  6-2 judul "Nvidia Dikabarkan Diselidiki SEC", tag [KLAIM].
+- Strip UTC: batang rentang gempa Peru pindah ke baris sendiri (y 140-148)
+  di antara label dan garis ruler — v2 menimpa label (hanya "4:00" terbaca).
+- ICJ dipersempit: 5-3 memakai frasa persis sumber "pertama kalinya ICJ
+  menyatakan sebuah negara melakukan genosida" (CNN/Asia Daily 19 Nov);
+  5-2 "diperintah ganti rugi" TETAP (terverifikasi CNN + SCC Times).
+- Renumber: cerita 5 Peru <-> 7 Myanmar ditukar; hero jadi 1-6;
+  legenda "Lingkar merah = 1-6"; pin 5 = Myanmar, pin 7 = Peru.
+- Badan 5-3 render 10px (bukan 11px) supaya frasa verbatim muat 3 baris;
+  judul 13-1 dan 6-2 dipadatkan agar muat 2 baris (angka ~69% / -14%
+  tetap ada di badan kartu).
+
 Run locally:  python3 build_image.py
 No randomness, no clock, no network. Re-running writes identical bytes.
 """
@@ -81,7 +96,7 @@ REGION_NAMES = [
 ]
 
 # Hero stories (red border on their first card, red ring on their map pin).
-HERO_STORIES = {1, 2, 3, 4, 6, 7}
+HERO_STORIES = {1, 2, 3, 4, 5, 6}
 
 # (story, region, title, fact, tag, hero)
 CARDS = [
@@ -117,30 +132,30 @@ CARDS = [
     (4, "COP31", "Prancis-Panama Dorong Kembali",
      "Prancis + Panama dorong kembalikan 'fossil fuels' ke draf.",
      "RESMI", False),
-    # 5 — Gempa Peru
-    (5, "PERU", "Gempa M6,7 Guncang Junín",
-     "M6,7 (sumber lain 6,9); kedalaman ~108 km.", "BERSELISIH", False),
-    (5, "PERU", "Terasa Sampai Lima",
-     "Jumat malam waktu setempat; Sabtu dini hari UTC, terasa di Lima.",
+    # 5 — Myanmar / ICJ (dulu 7; tukar dengan Peru — Claude v2 poin 4)
+    (5, "MYANMAR", "Myanmar Tolak Putusan ICJ",
+     "Myanmar menolak putusan ICJ soal Rohingya.", "RESMI", True),
+    (5, "MYANMAR", "ICJ: Myanmar Bersalah Genosida",
+     "Bersalah genosida atas Rohingya (Rakhine 2017); diperintah ganti rugi.",
      "RESMI", False),
-    (5, "PERU", "Tanpa Korban, Tanpa Tsunami",
-     "Tanpa korban/kerusakan; tanpa tsunami.", "RESMI", False),
+    (5, "MYANMAR", "9–6, Pertama dalam Sejarah",
+     "9–6; pertama kalinya ICJ menyatakan sebuah negara melakukan genosida.",
+     "RESMI", False, 10),
     # 6 — Saham AI
     (6, "PASAR", "S&P -3,7%, Nasdaq -5,3%",
      "Penutupan Jumat 21:00 UTC; S&P −3,7%, Nasdaq −5,3%.", "DATA", True),
-    (6, "PASAR", "Nvidia -14%, Diselidiki SEC",
-     "Anjlok 14%; laporan media: penyelidikan SEC.", "DATA", False),
+    (6, "PASAR", "Nvidia Dikabarkan Diselidiki SEC",
+     "Anjlok 14%; laporan media: penyelidikan SEC.", "KLAIM", False),
     (6, "PASAR", "Gain 2026 Terhapus",
      "S&P 500 dan Nasdaq menghapus seluruh gain 2026.", "DATA", False),
-    # 7 — Myanmar / ICJ
-    (7, "MYANMAR", "Myanmar Tolak Putusan ICJ",
-     "Myanmar menolak putusan ICJ soal Rohingya.", "RESMI", True),
-    (7, "MYANMAR", "ICJ: Myanmar Bersalah Genosida",
-     "Bersalah genosida atas Rohingya (Rakhine 2017); diperintah ganti rugi.",
+    # 7 — Gempa Peru (dulu 5; tukar dengan Myanmar — Claude v2 poin 4)
+    (7, "PERU", "Gempa M6,7 Guncang Junín",
+     "M6,7 (sumber lain 6,9); kedalaman ~108 km.", "BERSELISIH", False),
+    (7, "PERU", "Terasa Sampai Lima",
+     "Jumat malam waktu setempat; Sabtu dini hari UTC, terasa di Lima.",
      "RESMI", False),
-    (7, "MYANMAR", "9–6, Pertama dalam Sejarah",
-     "9–6; pertama kalinya ICJ menyatakan negara bersalah genosida.",
-     "RESMI", False),
+    (7, "PERU", "Tanpa Korban, Tanpa Tsunami",
+     "Tanpa korban/kerusakan; tanpa tsunami.", "RESMI", False),
     # 8 — Tanker Hormuz
     (8, "HORMUZ", "Tanker Terbakar di Hormuz",
      "~8 mil laut utara Khasab, Oman.", "RESMI", False),
@@ -168,7 +183,7 @@ CARDS = [
     (11, "DIPLOMASI", "Yalta x Trump, Xi, Putin",
      "Foto Yalta 1945 dipadukan dengan Trump, Xi, Putin.", "RESMI", False),
     (11, "DIPLOMASI", "Debat: Diplomasi vs Pembagian Baru",
-     "Postingan memantik debat diplomasi vs pembagian baru.", "RESMI", False),
+     "Postingan memantik debat diplomasi vs pembagian baru.", "INFO", False),
     # 12 — UE–Indonesia
     (12, "DAGANG", "UE–Indonesia Teken Dagang",
      "CEPA + perjanjian investasi diteken di Brussels.", "RESMI", False),
@@ -178,15 +193,15 @@ CARDS = [
     (12, "DAGANG", "Berlaku 2027, Pasar 730 Juta",
      "Berlaku awal 2027; pasar gabungan 730 juta orang.", "RESMI", False),
     # 13 — Dengue Brasil
-    (13, "BRASIL", "Nyamuk Wolbachia Tekan Dengue",
+    (13, "BRASIL", "Studi: Wolbachia Tekan Dengue",
      "Nyamuk Wolbachia tekan infeksi dengue + chikungunya ~69%.",
-     "RESMI", False),
+     "DATA", False),
     (13, "BRASIL", "Uji pada 5.700 Anak",
      "Studi 4 tahun, 5.700+ anak usia 6–11 di Belo Horizonte.",
-     "RESMI", False),
+     "DATA", False),
     (13, "BRASIL", "Efek Bertahan Saat Wabah 2024",
      "Efek bertahan selama wabah parah 2024; belum peer-review.",
-     "RESMI", False),
+     "DATA", False),
     # Summary cards (meta-cards, not news)
     ("S1", "RINGKASAN", "13 Cerita, 39 Entri + 3 Catatan",
      "Satu hari, 13 cerita, 39 entri + 3 catatan.", "INFO", False),
@@ -240,9 +255,9 @@ PINS = [
     (2, "UKRAINA", 33.4, 47.9, 0, 0),     # Kryvyi Rih
     (3, "MEKSIKO", -108.5, 25.6, 0, 0),   # Guasave, Sinaloa
     (4, "COP31", 30.7, 36.9, -9, 8),      # Antalya (nudged off Kryvyi Rih)
-    (5, "PERU", -75.0, -11.0, 0, 0),      # Junin, Peru
+    (5, "MYANMAR", 96.0, 21.0, 0, 0),     # Myanmar (dulu pin 7)
     (6, "PASAR", -74.0, 40.7, 0, 0),      # New York (AI markets)
-    (7, "MYANMAR", 96.0, 21.0, 0, 0),     # Myanmar
+    (7, "PERU", -75.0, -11.0, 0, 0),      # Junin, Peru (dulu pin 5)
     (8, "HORMUZ", 56.2, 26.2, 13, 13),    # Khasab, Oman (nudged off Bahrain)
     (9, "LADAKH", 77.6, 34.2, 0, 0),      # Leh, Ladakh
     (10, "BALTIK", 25.0, 59.8, 0, 0),     # Gulf of Finland
@@ -308,7 +323,7 @@ def draw_map(draw):
 
 
 def draw_card(draw, x, y, w, h, card, issues):
-    story, region, title, fact, tag, hero = card
+    story, region, title, fact, tag, hero = card[:6]
     region_color = REGION_COLOR[region]
     draw.rectangle([x, y, x + w - 1, y + h - 1], fill=CARD_BG, outline=RULE, width=1)
     if hero:
@@ -344,9 +359,12 @@ def draw_card(draw, x, y, w, h, card, issues):
         draw.text((px, ty), ln, font=f_title, fill=INK)
         ty += 14
     # Fact: 11px, max 3 lines (summary cards S2/S3: 9px, max 5 lines).
+    # A card may carry a 7th tuple element = fact font size (v3: card 5-3
+    # needs 10px so the verbatim ICJ phrase fits in 3 lines).
     small = story in ("S2", "S3")
-    f_fact = font("DejaVuSans.ttf", 9 if small else 11)
-    fact_lh = 10 if small else 12
+    fact_px = card[6] if len(card) > 6 else (9 if small else 11)
+    f_fact = font("DejaVuSans.ttf", fact_px)
+    fact_lh = fact_px + 1
     fact_max = 5 if small else 3
     flines = wrap(draw, fact, f_fact, inner)
     for ln in flines:
@@ -383,7 +401,7 @@ def draw_strip(draw, rx):
     draw.text((rx, 80), "13 PIN = 13 CERITA · NOMOR = NOMOR KARTU",
               font=f_lab, fill=INK)
     # Region colour legend with swatches.
-    lx, ly = rx, 98
+    lx, ly = rx, 96
     draw.text((lx, ly), "Pin = warna region:", font=f_small, fill=INK)
     cx = lx + draw.textlength("Pin = warna region: ", font=f_small)
     for color, name in REGION_NAMES:
@@ -392,19 +410,20 @@ def draw_strip(draw, rx):
         draw.text((cx, ly), name, font=f_small, fill=INK)
         cx += draw.textlength(name, font=f_small) + 4
         draw.text((cx - 4, ly), "·", font=f_small, fill=MUTED)
-    draw.text((rx, 112), "Lingkar merah = cerita utama (1, 2, 3, 4, 6, 7).",
+    draw.text((rx, 110), "Lingkar merah = 1–6.",
               font=f_small, fill=MUTED)
-    draw.text((rx, 126), "STRIP UTC — JUM 21:00 → SAB 24:00",
+    draw.text((rx, 124), "STRIP UTC — JUM 21:00 → SAB 24:00",
               font=f_lab, fill=INK)
-    sx0, sx1, sy = rx + 8, 1004, 146
+    sx0, sx1, sy = rx + 8, 1004, 158
     span_h = 27.0
 
     def x_at(hours_since_fri21):
         return sx0 + (sx1 - sx0) * hours_since_fri21 / span_h
 
     # Peru quake range: Fri evening local (UTC-5) = Sat 00:00–05:00 UTC.
+    # Own row between the label and the ruler (v2: it overlapped the label).
     rx0, rx1 = x_at(3), x_at(8)
-    draw.rectangle([rx0, 130, rx1, 138], fill=GREEN_TINT, outline=GREEN, width=1)
+    draw.rectangle([rx0, 140, rx1, 148], fill=GREEN_TINT, outline=GREEN, width=1)
     # Ruler.
     draw.line([sx0, sy, sx1, sy], fill=INK, width=2)
     for h in range(0, 28):
@@ -421,13 +440,13 @@ def draw_strip(draw, rx):
         draw.text((ax, sy + 8), lab, font=f_small, fill=INK)
     # Wall Street close tick: Fri 21:00 UTC.
     draw.line([sx0, sy - 8, sx0, sy + 8], fill=GREEN, width=3)
-    draw.text((rx, 170),
+    draw.text((rx, 182),
               "▬ Gempa Peru: Jumat malam waktu setempat = Sabtu 00:00–05:00 UTC "
               "(rentang, bukan jam pasti)",
               font=f_small, fill=INK)
-    draw.text((rx, 186), "▼ Penutupan Wall Street: Jumat 21:00 UTC",
+    draw.text((rx, 196), "▼ Penutupan Wall Street: Jumat 21:00 UTC",
               font=f_small, fill=INK)
-    draw.text((rx, 202), "Jam lain tidak diverifikasi.", font=f_small, fill=MUTED)
+    draw.text((rx, 210), "Jam lain tidak diverifikasi.", font=f_small, fill=MUTED)
 
 
 def render():
