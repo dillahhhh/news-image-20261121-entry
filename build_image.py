@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.3 (brief rev8.3).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.4 (brief rev8.4).
+
+v8.4 = polish atas v8.3 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 1 edit footer + 1 target judul DIBLOKIR terukur — TANPA
+ubah geometri (GRID_ROWS, SEC_H, HEADER_H, gap semua TETAP v8.1/v8.2/v8.3).
+Perubahan vs v8.3 (brief rev8.4):
+- footer src1: "InfoLiveScore, theScore" dipulihkan (terukur 961,0px
+  <= 990px); dana "Middle East Eye" -> "MEE" (hemat 63,9px; "MEE" =
+  kode meta kartu #16 sendiri). "Sky News" tetap penuh; src2 tak berubah.
+- A1 DIBLOKIR: judul #10 "Drone Serang Sparta II" = 258,8px > 235px
+  (lebih 23,8px; klaim Nemotron "~206px" salah ~53px) -> judul #10
+  TETAP "Sparta II Kena drone" (233,1px). Font tidak dikecilkan.
 
 v8.3 = polish atas v8.2 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 6 edit teks + percobaan footer — TANPA ubah geometri
@@ -37,7 +48,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_3 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_4 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
@@ -402,15 +413,16 @@ def draw_footer(draw, y):
         draw.text((cx, y + 12), g, font=lf, fill=MUTED)
         cx += tw(draw, g, lf) + 8
     assert cx - MARGIN <= 990, "legenda region terlalu lebar"
-    # L3+L4: daftar sumber LENGKAP, nama penuh (brief E). v8.3: f(11),
-    # "Sky News" dipulihkan (terukur 963,9px <= 990px); dananya
-    # "InfoLiveScore" -> "ILS" (kode meta; nama penuh tetap ada di src2
-    # "Skor olahraga: InfoLiveScore, theScore"). Hapus label "SRC: " saja
-    # TIDAK cukup (992,7px, masih lebih 2,7px) — label dipertahankan.
-    # SEMUA outlet tetap disebut.
+    # L3+L4: daftar sumber LENGKAP, nama penuh (brief E). v8.4: f(11),
+    # "InfoLiveScore, theScore" dipulihkan di src1 (terukur 961,0px
+    # <= 990px); dananya "Middle East Eye" -> "MEE" (hemat 63,9px;
+    # "MEE" = kode meta kartu #16 sendiri, bisa didekode dari kartu).
+    # "Sky News" tetap penuh (dipulihkan v8.3). Jalur cadangan (hapus
+    # spasi setelah koma, hemat 66,5px -> 958,4px) TIDAK dipakai —
+    # jalur utama muat. SEMUA outlet tetap disebut.
     src1 = ("SRC: BBC, Reuters, AP, Al Jazeera, Guardian, DW, Sky News, "
-            "UPI, CBC, RFI, Middle East Eye, ICJ, USGS, UKMTO, Majik, "
-            "ILS/theScore, Straits Times, Economic Times, "
+            "UPI, CBC, RFI, MEE, ICJ, USGS, UKMTO, Majik, "
+            "InfoLiveScore, theScore, Straits Times, Economic Times, "
             "Truth Social")
     src2 = ("Data pasar: Equiti via Majik · Korban gempa: INDECI · "
             "Skor olahraga: InfoLiveScore, theScore")
