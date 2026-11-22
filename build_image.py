@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.4 (brief rev8.4).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.5 (brief rev8.5).
+
+v8.5 = polish atas v8.4 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 3 micro-fix (brief rev8.5) — TANPA ubah geometri:
+- A1 DIBLOKIR terukur: h1 "7 CATEGORIES" = 1014,9px > 990px (lama
+  "7 KATEGORI" 974,0px) -> h1 TETAP "7 KATEGORI". Alternatif "34 DATED
+  STORIES, 7 CATEGORIES" muat (869,1px) tapi buang kata "DATE-CHECKED" —
+  TIDAK diterapkan (perubahan copy tak diotorisasi brief); dilaporkan.
+- A2 footer: teks footer (l1, nama legenda region, src1, src2) MUTED ->
+  INK (kontras maks, tanpa ubah ukuran font/geometri). MUTED global TETAP.
+- A3 judul #10 "Sparta II Kena Drone" (kapital D, data v8.5) digambar dgn
+  tracking -0,06px/celah (terukur 234,6px <= 235px; string penuh 235,4px).
+  Helper draw_tracked HANYA utk judul #10; 33 kartu lain tak tersentuh.
 
 v8.4 = polish atas v8.3 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 1 edit footer + 1 target judul DIBLOKIR terukur — TANPA
@@ -48,7 +60,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_4 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_5 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
@@ -154,6 +166,15 @@ def wrap(text, font, width, draw):
     if cur:
         lines.append(cur)
     return lines
+
+TRACK10 = -0.06  # px/celah, judul #10 saja (v8.5 A3)
+
+def draw_tracked(draw, text, x, y, font, fill, track=TRACK10):
+    # Gambar per karakter dgn tracking; HANYA judul #10 (v8.5 A3).
+    cx = x
+    for i, ch in enumerate(text):
+        draw.text((cx, y), ch, font=font, fill=fill)
+        cx += draw.textlength(ch, font=font) + (track if i < len(text) - 1 else 0)
 
 # ---- peta: crop lon -120..110, lat 0..80, K=1.45 ----
 MAP_K = 1.45
@@ -376,12 +397,23 @@ def draw_regular(draw, x, y):
                        outline=BORDER, width=1, fill=WHITE)
         draw_meta(draw, s, cx + META_MARGIN, cy + 4, GRID_W)
         tf = f(20, True)
-        tl = wrap(s[2], tf, GRID_W - 8, draw)
+        if s[0] == 10:
+            # v8.5 A3: "Sparta II Kena Drone" dgn tracking -0,06px/celah
+            # (terukur 234,6px <= 235px). JANGAN via wrap() — wrap pakai
+            # lebar string penuh 235,4px -> 2 baris (salah).
+            tw10 = sum(draw.textlength(c, font=tf) for c in s[2]) + TRACK10 * (len(s[2]) - 1)
+            assert tw10 <= GRID_W - 8, f"judul #10 tracking {tw10:.1f}px"
+            tl = [s[2]]
+        else:
+            tl = wrap(s[2], tf, GRID_W - 8, draw)
         tall = len(tl) == 2
         assert len(tl) <= 2, f"judul reguler #{s[0]} {len(tl)} baris"
         by = cy + 62 if tall else cy + 40
         for j, ln in enumerate(tl):
-            draw.text((cx + 4, cy + 19 + j * 22), ln, font=tf, fill=INK)
+            if s[0] == 10:
+                draw_tracked(draw, ln, cx + 4, cy + 19 + j * 22, tf, INK)
+            else:
+                draw.text((cx + 4, cy + 19 + j * 22), ln, font=tf, fill=INK)
         bf = f(16)
         bl = wrap(s[3], bf, GRID_W - 8, draw)
         max_body = 3 if (ch >= 93 and not tall) else 2
@@ -403,14 +435,15 @@ def draw_footer(draw, y):
              "resmi; jam strip terverifikasi. Berita 21 Nov: peristiwa "
              "20 Nov yang dilaporkan 21 Nov + pasar tutup Jumat 21:00 UTC.")
     assert tw(draw, line1, f(11)) <= 990, f"footer l1 {tw(draw, line1, f(11)):.0f}px"
-    draw.text((MARGIN, y + 0), line1, font=f(11), fill=MUTED)
+    # v8.5 A2: teks footer MUTED -> INK (kontras; MUTED global TETAP).
+    draw.text((MARGIN, y + 0), line1, font=f(11), fill=INK)
     # L2: legenda region 11px (dot 12px + nama penuh).
     lf = f(11)
     cx = MARGIN
     for g in GROUP_ORDER:
         draw.ellipse([cx, y + 12, cx + 11, y + 23], fill=GROUP_COLOR[g])
         cx += 13
-        draw.text((cx, y + 12), g, font=lf, fill=MUTED)
+        draw.text((cx, y + 12), g, font=lf, fill=INK)  # v8.5 A2
         cx += tw(draw, g, lf) + 8
     assert cx - MARGIN <= 990, "legenda region terlalu lebar"
     # L3+L4: daftar sumber LENGKAP, nama penuh (brief E). v8.4: f(11),
@@ -428,8 +461,8 @@ def draw_footer(draw, y):
             "Skor olahraga: InfoLiveScore, theScore")
     assert tw(draw, src1, f(11)) <= 990, f"footer src1 {tw(draw, src1, f(11)):.0f}px"
     assert tw(draw, src2, f(11)) <= 990, f"footer src2 {tw(draw, src2, f(11)):.0f}px"
-    draw.text((MARGIN, y + 24), src1, font=f(11), fill=MUTED)
-    draw.text((MARGIN, y + 36), src2, font=f(11), fill=MUTED)
+    draw.text((MARGIN, y + 24), src1, font=f(11), fill=INK)  # v8.5 A2
+    draw.text((MARGIN, y + 36), src2, font=f(11), fill=INK)  # v8.5 A2
 
 def render():
     assert len(STORIES) == 34, f"{len(STORIES)} cerita"
