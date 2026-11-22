@@ -136,11 +136,11 @@ CARDS = [
     (5, "MYANMAR", "Myanmar Tolak Putusan ICJ",
      "Myanmar menolak putusan ICJ soal Rohingya.", "RESMI", True),
     (5, "MYANMAR", "ICJ: Myanmar Bersalah Genosida",
-     "Bersalah genosida atas Rohingya; diperintah ganti rugi (besaran menyusul).",
+     "Genosida Rohingya (2017); diperintah ganti rugi (besaran menyusul).",
      "RESMI", False),
     (5, "MYANMAR", "9–6, Pertama dalam Sejarah",
-     "9–6 atas pokok genosida; pertama kalinya ICJ menyatakan negara melakukan genosida.",
-     "RESMI", False, 9),
+     "9–6 pada pokok perkara; ICJ putuskan Myanmar lakukan genosida.",
+     "RESMI", False),
     # 6 — Saham AI
     (6, "PASAR", "S&P -3,7%, Nasdaq -5,3%",
      "Penutupan Jumat 21:00 UTC; S&P −3,7%, Nasdaq −5,3%.", "DATA", True),
@@ -360,7 +360,8 @@ def draw_card(draw, x, y, w, h, card, issues):
         ty += 14
     # Fact: 11px, max 3 lines (summary cards S2/S3: 9px, max 5 lines).
     # A card may carry a 7th tuple element = fact font size (v4: card 5-3
-    # needs 9px so the ICJ phrase + "atas pokok genosida" fits in 3 lines).
+    # used 9px; v5 removed the override — the 62-char fallback fits
+    # 3 lines at 11px; the 71-char draft wrapped to 4).
     small = story in ("S2", "S3")
     fact_px = card[6] if len(card) > 6 else (9 if small else 11)
     f_fact = font("DejaVuSans.ttf", fact_px)
