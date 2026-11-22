@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.8 (brief rev8.8).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.9 (brief rev8.9).
+
+v8.9 = polish atas v8.8 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 5 micro-fix teks (brief rev8.9) — TANPA ubah geometri:
+- A1 h1 "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 TOPICS" ->
+  "BERITA DUNIA — 34 DATE-CHECKED STORIES, 7 TOPIK" (908.6px @30px bold).
+- A2 badan #34 "Indiana;" -> "Indiana." (tetap 3 baris).
+- A3 badan #22 "Database kejahatan AS" -> "Database kriminal FBI".
+- A4 badan #23 "langgar kuorum" -> "langgar syarat kuorum".
+- A5 badan lead #1 "F-16 kena" -> "F-16 terkena" (tetap 2 baris, assert lead).
 
 v8.8 = polish atas v8.7 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 2 micro-fix huruf (brief rev8.8) — TANPA ubah geometri:
@@ -70,7 +79,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_8 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_9 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
@@ -317,7 +326,7 @@ def draw_meta(draw, s, x, y, card_w):
     return mt
 
 def draw_header(draw):
-    h1 = "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 TOPICS"
+    h1 = "BERITA DUNIA — 34 DATE-CHECKED STORIES, 7 TOPIK"
     assert tw(draw, h1, f(30, True)) <= 990, "h1 terlalu lebar"
     draw.text((MARGIN, 1), h1, font=f(30, True), fill=INK)
     # h2 HURUF BESAR SEMUA (tanpa descender — memberi ruang utk legenda tag)
