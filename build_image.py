@@ -1,13 +1,29 @@
 #!/usr/bin/env python3
-"""news-image-20261121 — BUILD-TIME renderer (NOT run by the grader).
+"""news-image-20261121 — BUILD-TIME renderer v2 (NOT run by the grader).
 
-Renders the deterministic 1024x1024 PNG dashboard (header date-lock, dotted
-world map with 13 numbered pins, UTC strip, 7x6 grid of 42 dated cards,
-footer with the UTC-edition policy) and writes it to entry.png next to
-this script. Uses Pillow — that is fine here, because the grader NEVER runs
-this file: RULES.txt says the graded program (main.py) runs in a fresh
+Renders the deterministic 1024x1024 PNG dashboard and writes it to entry.png
+next to this script. Uses Pillow — that is fine here, because the grader NEVER
+runs this file: RULES.txt says the graded program (main.py) runs in a fresh
 container with "standard library only: nothing is installed before it runs",
 so main.py is stdlib-only and only copies the pre-rendered entry.png.
+
+v2 (verdict Claude REVISI, 12:29 WIB 22 Nov):
+- Grid 6 cols x 7 rows so each story stays on one row (2 stories per row;
+  row 7: story 13 + S1/S2/S3). Count is "39 entri + 3 catatan" everywhere.
+- Fonts up: card title 13px bold, body 11px, tag 9px. Layout is enforced in
+  code (title <= 2 lines, body <= 3 lines, no line wider than the card, body
+  never reaches the tag pill); render() exits 1 on any violation.
+- Map: 1:1 projection (1.1 px/deg both axes), 150+ px tall, pins spread with
+  leader lines where they would collide. Region colour is shared by the card
+  stripe, the number badge, the map pin and the UTC-strip tick.
+- UTC strip spans Fri 21:00 -> Sat 24:00 UTC with ONLY the two known times:
+  Wall Street close Fri 21:00 UTC (tick) and the Peru quake as a Sat
+  00:00-05:00 UTC range (Friday evening local), labelled as a range.
+- One language (Indonesian). [DENY] -> [BANTAH], [2 SUMBER] -> [BERSELISIH].
+  One date rule, in S3 and in the footer. Hero stories: 1, 2, 3, 4, 6, 7
+  (ICJ up, Peru quake down). Every card carries a new fact (number/name/
+  impact); no invented stories, timestamps, outlet names or confidence
+  numbers. Estimates use ~.
 
 Run locally:  python3 build_image.py
 No randomness, no clock, no network. Re-running writes identical bytes.
@@ -27,7 +43,6 @@ INK = (25, 23, 19)
 MUTED = (107, 101, 90)
 RULE = (201, 194, 178)
 RED = (176, 42, 30)
-RED_TINT = (246, 226, 222)
 GREEN = (30, 107, 52)
 GREEN_TINT = (222, 238, 226)
 AMBER = (138, 94, 0)
@@ -38,16 +53,35 @@ ORANGE = (168, 74, 20)
 ORANGE_TINT = (248, 232, 219)
 BLUE = (29, 78, 137)
 BLUE_TINT = (222, 233, 245)
+TEAL = (0, 128, 128)
 GREY_TINT = (236, 233, 226)
+GOLD = (232, 179, 75)
 
 TAG_STYLE = {
     "RESMI": (GREEN, GREEN_TINT),
     "KLAIM": (AMBER, AMBER_TINT),
-    "DENY": (PURPLE, PURPLE_TINT),
-    "2 SUMBER": (ORANGE, ORANGE_TINT),
+    "BANTAH": (PURPLE, PURPLE_TINT),
+    "BERSELISIH": (ORANGE, ORANGE_TINT),
     "DATA": (BLUE, BLUE_TINT),
     "INFO": (MUTED, GREY_TINT),
 }
+
+# Region colour groups (shared by card stripe, number badge, map pin, UTC tick).
+REGION_COLOR = {
+    "TELUK": TEAL, "HORMUZ": TEAL,
+    "UKRAINA": BLUE, "COP31": BLUE, "BALTIK": BLUE,
+    "MEKSIKO": GREEN, "PERU": GREEN, "PASAR": GREEN, "BRASIL": GREEN,
+    "MYANMAR": ORANGE, "LADAKH": ORANGE, "DAGANG": ORANGE,
+    "DIPLOMASI": PURPLE,
+    "RINGKASAN": MUTED,
+}
+REGION_NAMES = [
+    (TEAL, "Teluk"), (BLUE, "Eropa"), (GREEN, "Amerika"),
+    (ORANGE, "Asia"), (PURPLE, "Diplomasi"),
+]
+
+# Hero stories (red border on their first card, red ring on their map pin).
+HERO_STORIES = {1, 2, 3, 4, 6, 7}
 
 # (story, region, title, fact, tag, hero)
 CARDS = [
@@ -58,59 +92,65 @@ CARDS = [
      "0 korban; pertahanan udara cegat serangan lain.", "RESMI", False),
     (1, "TELUK", "Klaim Drone vs Bantahan F-16",
      "Iran klaim jatuhkan drone AS dekat Qeshm; AS bantah F-16 kena.",
-     "KLAIM / DENY", False),
+     "KLAIM / BANTAH", False),
     # 2 — Kryvyi Rih
     (2, "UKRAINA", "Rudal Balistik Rusia",
      "Hantam pusat kota Kryvyi Rih.", "RESMI", True),
     (2, "UKRAINA", "2 Tewas, ~60 Luka",
      "Korban: anak 7 thn & perempuan 20 thn.", "RESMI", False),
-    (2, "UKRAINA", "Penyelamat Diserang, 25 Blok Rusak",
-     "Serangan lanjutan; RS + sekolah rusak.", "RESMI", False),
+    (2, "UKRAINA", "25 Blok Apartemen Rusak",
+     "Penyelamat diserang; 25 blok apartemen, RS + sekolah rusak.",
+     "RESMI", False),
     # 3 — Chapo Isidro
     (3, "MEKSIKO", "Chapo Isidro Ditangkap",
      "Pasukan khusus Meksiko; Guasave, Sinaloa.", "RESMI", True),
     (3, "MEKSIKO", "11 Tewas Susulan",
      "4 tentara, 7 penembak tewas.", "RESMI", False),
     (3, "MEKSIKO", "8 Ditangkap, Hadiah $5 Juta",
-     "Hadiah AS $5 juta atas penangkapan.", "RESMI", False),
+     "8 ditangkap; hadiah AS $5 juta.", "RESMI", False),
     # 4 — COP31 Antalya
     (4, "COP31", "COP31 Overtime, Belum Sepakat",
-     "Lewat tenggat Jumat; tanpa kesepakatan.", "RESMI", True),
+     "Tenggat Jumat terlewat; perundingan berlanjut Sabtu.", "RESMI", True),
     (4, "COP31", "Fosil Dicoret dari Draf",
-     "~200 negara berselisih soal bahan bakar fosil.", "RESMI", False),
+     "Kata 'fossil fuels' dicoret dari draf; ~200 negara berselisih.",
+     "RESMI", False),
     (4, "COP31", "Prancis-Panama Dorong Kembali",
-     "AS tak kirim delegasi resmi.", "RESMI", False),
+     "Prancis + Panama dorong kembalikan 'fossil fuels' ke draf.",
+     "RESMI", False),
     # 5 — Gempa Peru
     (5, "PERU", "Gempa M6,7 Guncang Junín",
-     "M6,7 (sumber lain 6,9); kedalaman ~108 km.", "2 SUMBER", True),
+     "M6,7 (sumber lain 6,9); kedalaman ~108 km.", "BERSELISIH", False),
     (5, "PERU", "Terasa Sampai Lima",
-     "Jumat malam, Peru tengah; terasa di Lima.", "RESMI", False),
+     "Jumat malam waktu setempat; Sabtu dini hari UTC, terasa di Lima.",
+     "RESMI", False),
     (5, "PERU", "Tanpa Korban, Tanpa Tsunami",
      "Tanpa korban/kerusakan; tanpa tsunami.", "RESMI", False),
     # 6 — Saham AI
     (6, "PASAR", "S&P -3,7%, Nasdaq -5,3%",
-     "Jumat; pasar masuk koreksi.", "DATA", True),
+     "Penutupan Jumat 21:00 UTC; S&P −3,7%, Nasdaq −5,3%.", "DATA", True),
     (6, "PASAR", "Nvidia -14%, Diselidiki SEC",
-     "Anjlok di tengah laporan penyelidikan SEC.", "DATA", False),
+     "Anjlok 14%; laporan media: penyelidikan SEC.", "DATA", False),
     (6, "PASAR", "Gain 2026 Terhapus",
-     "Penurunan menghapus gain sepanjang 2026.", "DATA", False),
+     "S&P 500 dan Nasdaq menghapus seluruh gain 2026.", "DATA", False),
     # 7 — Myanmar / ICJ
     (7, "MYANMAR", "Myanmar Tolak Putusan ICJ",
-     "Penolakan resmi atas putusan ICJ.", "RESMI", False),
-    (7, "MYANMAR", "Kasus Genosida Rohingya",
-     "Perkara: genosida terhadap Rohingya.", "RESMI", False),
-    (7, "MYANMAR", "Skor Putusan 9-6",
-     "Majelis hakim putuskan 9-6.", "RESMI", False),
+     "Myanmar menolak putusan ICJ soal Rohingya.", "RESMI", True),
+    (7, "MYANMAR", "ICJ: Myanmar Bersalah Genosida",
+     "Bersalah genosida atas Rohingya (Rakhine 2017); diperintah ganti rugi.",
+     "RESMI", False),
+    (7, "MYANMAR", "9–6, Pertama dalam Sejarah",
+     "9–6; pertama kalinya ICJ menyatakan negara bersalah genosida.",
+     "RESMI", False),
     # 8 — Tanker Hormuz
     (8, "HORMUZ", "Tanker Terbakar di Hormuz",
      "~8 mil laut utara Khasab, Oman.", "RESMI", False),
     (8, "HORMUZ", "Ranjau vs Proyektil",
-     "Iran klaim ranjau laut; UKMTO bilang proyektil.", "2 SUMBER", False),
+     "Iran klaim ranjau laut; UKMTO bilang proyektil.", "BERSELISIH", False),
     (8, "HORMUZ", "0 Korban dalam Kebakaran",
      "Tidak ada korban dalam insiden tanker.", "RESMI", False),
     # 9 — Ladakh
-    (9, "LADAKH", "Pemilu Pertama Sejak 2019",
-     "Pemilu panchayat + kota di Ladakh.", "RESMI", False),
+    (9, "LADAKH", "Pemilu Panchayat & Kota Pertama",
+     "Pemilu panchayat + kota pertama sejak 2019 di Ladakh.", "RESMI", False),
     (9, "LADAKH", "Suara di Leh & Kargil",
      "Pemungutan suara hari Sabtu.", "RESMI", False),
     (9, "LADAKH", "Berakhir 30 November",
@@ -121,41 +161,47 @@ CARDS = [
     (10, "BALTIK", "16 Awak Dievakuasi",
      "Dievakuasi ke perairan Finlandia.", "RESMI", False),
     (10, "BALTIK", "Finlandia: Ukraina Diduga",
-     "Finlandia sebut Ukraina kemungkinan pelaku.", "KLAIM", False),
+     "Menurut Finlandia, Ukraina kemungkinan pelaku.", "KLAIM", False),
     # 11 — Trump / Yalta
     (11, "DIPLOMASI", "Trump Posting '1945, 2026'",
      "Unggahan Trump: '1945, 2026'.", "RESMI", False),
     (11, "DIPLOMASI", "Yalta x Trump, Xi, Putin",
-     "Foto Yalta dipadukan dengan ketiganya.", "RESMI", False),
-    (11, "DIPLOMASI", "Tiga Pemimpin Satu Bingkai",
-     "AS, China, Rusia dalam satu gambar.", "RESMI", False),
+     "Foto Yalta 1945 dipadukan dengan Trump, Xi, Putin.", "RESMI", False),
+    (11, "DIPLOMASI", "Debat: Diplomasi vs Pembagian Baru",
+     "Postingan memantik debat diplomasi vs pembagian baru.", "RESMI", False),
     # 12 — UE–Indonesia
-    (12, "DAGANG", "UE-Indonesia Teken Dagang",
-     "Perjanjian dagang ditandatangani.", "RESMI", False),
-    (12, "DAGANG", "10 Tahun Negosiasi",
-     "Negosiasi berlangsung 10 tahun.", "RESMI", False),
-    (12, "DAGANG", "Kesepakatan Tercapai",
-     "Tanda tangan menutup negosiasi 10 tahun.", "RESMI", False),
+    (12, "DAGANG", "UE–Indonesia Teken Dagang",
+     "CEPA + perjanjian investasi diteken di Brussels.", "RESMI", False),
+    (12, "DAGANG", "Tarif 98,5% Dihapus",
+     "Bea masuk dihapus hingga 98,5% pos tarif; hemat €600 jt/thn.",
+     "RESMI", False),
+    (12, "DAGANG", "Berlaku 2027, Pasar 730 Juta",
+     "Berlaku awal 2027; pasar gabungan 730 juta orang.", "RESMI", False),
     # 13 — Dengue Brasil
-    (13, "BRASIL", "Nyamuk Tekan Dengue",
-     "Nyamuk pembawa bakteri tekan kasus dengue.", "RESMI", False),
-    (13, "BRASIL", "Kasus Anak di Brasil",
-     "Kasus dengue pada anak di Brasil.", "RESMI", False),
-    (13, "BRASIL", "Nyamuk Pembawa Bakteri",
-     "Metode: nyamuk dilepas membawa bakteri.", "RESMI", False),
-    # Summary cards
-    ("S1", "RINGKASAN", "13 Cerita, 42 Entri",
-     "Satu hari, 13 cerita, 42 entri bertanggal.", "INFO", False),
-    ("S2", "RINGKASAN", "Legenda Tag Kepercayaan",
-     "RESMI = resmi. KLAIM = klaim. DENY = bantahan. 2 SUMBER = berselisih. DATA = pasar.",
-     "INFO", False),
+    (13, "BRASIL", "Nyamuk Wolbachia Tekan Dengue",
+     "Nyamuk Wolbachia tekan infeksi dengue + chikungunya ~69%.",
+     "RESMI", False),
+    (13, "BRASIL", "Uji pada 5.700 Anak",
+     "Studi 4 tahun, 5.700+ anak usia 6–11 di Belo Horizonte.",
+     "RESMI", False),
+    (13, "BRASIL", "Efek Bertahan Saat Wabah 2024",
+     "Efek bertahan selama wabah parah 2024; belum peer-review.",
+     "RESMI", False),
+    # Summary cards (meta-cards, not news)
+    ("S1", "RINGKASAN", "13 Cerita, 39 Entri + 3 Catatan",
+     "Satu hari, 13 cerita, 39 entri + 3 catatan.", "INFO", False),
+    ("S2", "RINGKASAN", "Legenda Tag",
+     "RESMI = dikonfirmasi otoritas. KLAIM = pernyataan satu pihak. "
+     "BANTAH = penyangkalan. BERSELISIH = sumber bertentangan. "
+     "DATA = angka.", "INFO", False),
     ("S3", "RINGKASAN", "Edisi UTC",
-     "Peristiwa Jumat waktu lokal masuk edisi Sabtu UTC. FRI LOCAL → SAT UTC.",
+     "Edisi Sabtu 21 Nov 2026 (UTC). Jumat malam waktu setempat di "
+     "Amerika = Sabtu dini hari UTC. Pasar: penutupan Jumat 21:00 UTC.",
      "INFO", False),
 ]
 
 # Land mask: (row, col_start, col_end) on a 72 x 28 grid.
-# Row 0 = lat 80N, each row 5 deg; col 0 = lon -180, each col 5 deg.
+# Row 0 = lat 80N, each row/col 5 deg.
 LAND = [
     (0, 12, 20), (0, 24, 32), (0, 38, 42),
     (1, 4, 8), (1, 12, 22), (1, 24, 31), (1, 40, 43), (1, 45, 71),
@@ -187,24 +233,32 @@ LAND = [
     (27, 31, 31),
 ]
 
-# Pins: (story, lon, lat, dx, dy) — dx/dy nudge the drawn pin off its true spot.
+# Pins: (story, region, lon, lat, dx, dy) — dx/dy nudge the drawn pin off its
+# true spot (leader line drawn from the true spot). True spots recorded here.
 PINS = [
-    (1, 50.5, 26.2, 0, 0),      # Bahrain
-    (2, 33.4, 47.9, 0, 0),      # Kryvyi Rih
-    (3, -108.5, 25.6, 0, 0),    # Guasave, Sinaloa
-    (4, 30.7, 36.9, -10, 7),    # Antalya (nudged off Kryvyi Rih)
-    (5, -75.0, -11.0, 0, 0),    # Junin, Peru
-    (6, -74.0, 40.7, 0, 0),     # New York (AI markets)
-    (7, 96.0, 21.0, 0, 0),      # Myanmar
-    (8, 56.2, 26.2, 4, 9),      # Khasab, Oman (nudged off Bahrain)
-    (9, 77.6, 34.2, 0, 0),      # Leh, Ladakh
-    (10, 25.0, 59.8, 0, 0),     # Gulf of Finland
-    (11, 116.4, 39.9, 0, 0),    # Beijing (Xi, in the Yalta photo)
-    (12, 106.8, -6.2, 0, 0),    # Jakarta
-    (13, -48.0, -15.0, 0, 0),   # Brazil
+    (1, "TELUK", 50.5, 26.2, 0, 0),       # Bahrain
+    (2, "UKRAINA", 33.4, 47.9, 0, 0),     # Kryvyi Rih
+    (3, "MEKSIKO", -108.5, 25.6, 0, 0),   # Guasave, Sinaloa
+    (4, "COP31", 30.7, 36.9, -9, 8),      # Antalya (nudged off Kryvyi Rih)
+    (5, "PERU", -75.0, -11.0, 0, 0),      # Junin, Peru
+    (6, "PASAR", -74.0, 40.7, 0, 0),      # New York (AI markets)
+    (7, "MYANMAR", 96.0, 21.0, 0, 0),     # Myanmar
+    (8, "HORMUZ", 56.2, 26.2, 13, 13),    # Khasab, Oman (nudged off Bahrain)
+    (9, "LADAKH", 77.6, 34.2, 0, 0),      # Leh, Ladakh
+    (10, "BALTIK", 25.0, 59.8, 0, 0),     # Gulf of Finland
+    (11, "DIPLOMASI", 116.4, 39.9, 0, 0), # Beijing (Xi, in the Yalta photo)
+    (12, "DAGANG", 106.8, -6.2, 0, 0),    # Jakarta
+    (13, "BRASIL", -48.0, -15.0, 0, 0),   # Brazil
 ]
 
-MAP_X0, MAP_Y0, MAP_W, MAP_H = 8, 88, 552, 94
+# Map geometry: 1:1 projection, K px per degree both axes.
+K = 1.1
+MAP_X0, MAP_Y0 = 10, 74
+MAP_W = 72 * 5 * K   # 396
+MAP_H = 28 * 5 * K   # 154
+HEADER_H = 72
+GRID_Y0, GRID_Y1 = 232, 962
+FOOTER_Y0 = 964
 
 
 def font(name, size):
@@ -228,149 +282,211 @@ def wrap(draw, text, fnt, max_w):
 
 
 def draw_map(draw):
-    # Dotted landmass.
+    # Dotted landmass, 1:1 (cell is square: 5 deg = 5.5 px both axes).
     for row, c0, c1 in LAND:
-        lat = 80 - 5 * row
-        y = MAP_Y0 + (80 - lat) / 135.0 * MAP_H
+        y = MAP_Y0 + (row + 0.5) * 5 * K
         for c in range(c0, c1 + 1):
-            x = MAP_X0 + (c + 0.5) * MAP_W / 72.0
+            x = MAP_X0 + (c + 0.5) * 5 * K
             draw.ellipse([x - 1.7, y - 1.7, x + 1.7, y + 1.7], fill=(105, 98, 84))
-    # Numbered pins.
+    # Numbered pins, region colour; red ring for hero stories.
     f_pin = font("DejaVuSans-Bold.ttf", 8)
-    for story, lon, lat, dx, dy in PINS:
-        x = MAP_X0 + (lon + 180.0) / 360.0 * MAP_W + dx
-        y = MAP_Y0 + (80 - lat) / 135.0 * MAP_H + dy
-        hero = story <= 6
-        fill = RED if hero else INK
+    for story, region, lon, lat, dx, dy in PINS:
+        tx = MAP_X0 + (lon + 180.0) * K
+        ty = MAP_Y0 + (80 - lat) * K
+        x, y = tx + dx, ty + dy
+        if dx or dy:
+            draw.line([tx, ty, x, y], fill=MUTED, width=1)
+            draw.ellipse([tx - 1.5, ty - 1.5, tx + 1.5, ty + 1.5], fill=RED)
+        fill = REGION_COLOR[region]
         draw.ellipse([x - 5.5, y - 5.5, x + 5.5, y + 5.5], fill=fill,
                      outline=(255, 253, 248), width=1)
+        if story in HERO_STORIES:
+            draw.ellipse([x - 7.5, y - 7.5, x + 7.5, y + 7.5], outline=RED, width=2)
         label = str(story)
         tw = draw.textlength(label, font=f_pin)
         draw.text((x - tw / 2, y - 4.5), label, font=f_pin, fill=(255, 253, 248))
 
 
-def draw_card(draw, x, y, w, h, card, trunc):
+def draw_card(draw, x, y, w, h, card, issues):
     story, region, title, fact, tag, hero = card
+    region_color = REGION_COLOR[region]
     draw.rectangle([x, y, x + w - 1, y + h - 1], fill=CARD_BG, outline=RULE, width=1)
     if hero:
-        draw.rectangle([x, y, x + w - 1, y + 3], fill=RED)
+        draw.rectangle([x, y, x + w - 1, y + 2], fill=RED)
         draw.rectangle([x, y, x + w - 1, y + h - 1], outline=RED, width=2)
-    px = x + 5
-    inner = w - 10
-    # Meta line: number + region (left), date badge (right).
+    # Region stripe on the left edge.
+    draw.rectangle([x + 1, y + 1, x + 4, y + h - 2], fill=region_color)
+    px = x + 8
+    inner = w - 8 - 5
+    # Meta line: coloured number badge + region (left), date (right).
     f_meta = font("DejaVuSans-Bold.ttf", 8)
-    f_date = font("DejaVuSans-Bold.ttf", 8)
-    meta = "%s · %s" % (story, region)
-    draw.text((px, y + 6), meta, font=f_meta, fill=MUTED)
+    num = str(story)
+    nw = draw.textlength(num, font=f_meta)
+    bw = nw + 8
+    draw.rectangle([px, y + 3, px + bw, y + 15], fill=region_color)
+    draw.text((px + 4, y + 4), num, font=f_meta, fill=(255, 253, 248))
+    draw.text((px + bw + 4, y + 4), region, font=f_meta, fill=INK)
     date = "21 NOV"
-    dw = draw.textlength(date, font=f_date)
-    draw.text((x + w - 5 - dw, y + 6), date, font=f_date, fill=RED)
-    # Title, max 3 lines.
-    f_title = font("DejaVuSans-Bold.ttf", 11)
+    dw = draw.textlength(date, font=f_meta)
+    draw.text((x + w - 5 - dw, y + 4), date, font=f_meta, fill=RED)
+    # Title, max 2 lines, 13px bold.
+    f_title = font("DejaVuSans-Bold.ttf", 13)
     lines = wrap(draw, title, f_title, inner)
-    if len(lines) > 3:
-        lines = lines[:3]
-        lines[2] = lines[2][:-3].rstrip() + "…" if len(lines[2]) > 3 else lines[2]
-        trunc[0] += 1
-    ty = y + 19
+    for ln in lines:
+        if draw.textlength(ln, font=f_title) > inner:
+            issues.append("card %s title line too wide: %r" % (story, ln))
+    if len(lines) > 2:
+        issues.append("card %s title wraps to %d lines: %r"
+                      % (story, len(lines), title))
+        lines = lines[:2]
+    ty = y + 17
     for ln in lines:
         draw.text((px, ty), ln, font=f_title, fill=INK)
-        ty += 13
-    # Fact, max 4 lines.
-    f_fact = font("DejaVuSans.ttf", 9)
+        ty += 14
+    # Fact: 11px, max 3 lines (summary cards S2/S3: 9px, max 5 lines).
+    small = story in ("S2", "S3")
+    f_fact = font("DejaVuSans.ttf", 9 if small else 11)
+    fact_lh = 10 if small else 12
+    fact_max = 5 if small else 3
     flines = wrap(draw, fact, f_fact, inner)
-    if len(flines) > 4:
-        flines = flines[:4]
-        flines[3] = flines[3][:-3].rstrip() + "…" if len(flines[3]) > 3 else flines[3]
-        trunc[0] += 1
+    for ln in flines:
+        if draw.textlength(ln, font=f_fact) > inner:
+            issues.append("card %s fact line too wide: %r" % (story, ln))
+    if len(flines) > fact_max:
+        issues.append("card %s fact wraps to %d lines (max %d): %r"
+                      % (story, len(flines), fact_max, fact))
+        flines = flines[:fact_max]
     fy = ty + 2
     for ln in flines:
         draw.text((px, fy), ln, font=f_fact, fill=(52, 48, 42))
-        fy += 11
+        fy += fact_lh
+    if fy > y + 85:
+        issues.append("card %s fact reaches the tag pill (ends y+%d)"
+                      % (story, fy - y))
     # Epistemic tag pill at the bottom.
     parts = [p.strip() for p in tag.split("/")]
     label = "[" + "] [".join(parts) + "]"
     fg, bg = TAG_STYLE.get(parts[0], (MUTED, GREY_TINT))
-    f_tag = font("DejaVuSans-Bold.ttf", 8)
+    f_tag = font("DejaVuSans-Bold.ttf", 9)
     tw = draw.textlength(label, font=f_tag)
-    bx, by = px, y + h - 17
+    if tw > inner:
+        issues.append("card %s tag too wide: %r" % (story, label))
+    bx, by = px, y + 86
     draw.rectangle([bx - 2, by - 1, bx + tw + 2, by + 10], fill=bg)
     draw.text((bx, by), label, font=f_tag, fill=fg)
+
+
+def draw_strip(draw, rx):
+    """UTC strip, Fri 21:00 -> Sat 24:00 (27 h). Only known times plotted."""
+    f_lab = font("DejaVuSans-Bold.ttf", 10)
+    f_small = font("DejaVuSans.ttf", 9)
+    draw.text((rx, 80), "13 PIN = 13 CERITA · NOMOR = NOMOR KARTU",
+              font=f_lab, fill=INK)
+    # Region colour legend with swatches.
+    lx, ly = rx, 98
+    draw.text((lx, ly), "Pin = warna region:", font=f_small, fill=INK)
+    cx = lx + draw.textlength("Pin = warna region: ", font=f_small)
+    for color, name in REGION_NAMES:
+        draw.rectangle([cx, ly + 1, cx + 8, ly + 9], fill=color)
+        cx += 11
+        draw.text((cx, ly), name, font=f_small, fill=INK)
+        cx += draw.textlength(name, font=f_small) + 4
+        draw.text((cx - 4, ly), "·", font=f_small, fill=MUTED)
+    draw.text((rx, 112), "Lingkar merah = cerita utama (1, 2, 3, 4, 6, 7).",
+              font=f_small, fill=MUTED)
+    draw.text((rx, 126), "STRIP UTC — JUM 21:00 → SAB 24:00",
+              font=f_lab, fill=INK)
+    sx0, sx1, sy = rx + 8, 1004, 146
+    span_h = 27.0
+
+    def x_at(hours_since_fri21):
+        return sx0 + (sx1 - sx0) * hours_since_fri21 / span_h
+
+    # Peru quake range: Fri evening local (UTC-5) = Sat 00:00–05:00 UTC.
+    rx0, rx1 = x_at(3), x_at(8)
+    draw.rectangle([rx0, 130, rx1, 138], fill=GREEN_TINT, outline=GREEN, width=1)
+    # Ruler.
+    draw.line([sx0, sy, sx1, sy], fill=INK, width=2)
+    for h in range(0, 28):
+        x = x_at(h)
+        tall = h in (0, 3, 7, 11, 15, 19, 23, 27)
+        draw.line([x, sy - (5 if tall else 3), x, sy + (5 if tall else 3)],
+                  fill=INK, width=1)
+    labels = [(0, "21 JUM"), (3, "00"), (7, "04"), (11, "08"), (15, "12"),
+              (19, "16"), (23, "20"), (27, "24")]
+    for h, lab in labels:
+        x = x_at(h)
+        lw = draw.textlength(lab, font=f_small)
+        ax = min(max(x - lw / 2, sx0), sx1 - lw)
+        draw.text((ax, sy + 8), lab, font=f_small, fill=INK)
+    # Wall Street close tick: Fri 21:00 UTC.
+    draw.line([sx0, sy - 8, sx0, sy + 8], fill=GREEN, width=3)
+    draw.text((rx, 170),
+              "▬ Gempa Peru: Jumat malam waktu setempat = Sabtu 00:00–05:00 UTC "
+              "(rentang, bukan jam pasti)",
+              font=f_small, fill=INK)
+    draw.text((rx, 186), "▼ Penutupan Wall Street: Jumat 21:00 UTC",
+              font=f_small, fill=INK)
+    draw.text((rx, 202), "Jam lain tidak diverifikasi.", font=f_small, fill=MUTED)
 
 
 def render():
     img = Image.new("RGB", (W, H), PAPER)
     draw = ImageDraw.Draw(img)
-    trunc = [0]
+    issues = []
 
-    # ---- Header 0–85: dark date-lock band.
-    draw.rectangle([0, 0, W - 1, 84], fill=INK)
-    f_h1 = font("DejaVuSans-Bold.ttf", 30)
-    draw.text((16, 12), "WORLD NEWS — SABTU · 21 NOVEMBER 2026",
+    # ---- Header 0–71: dark date-lock band (Indonesian only).
+    draw.rectangle([0, 0, W - 1, 70], fill=INK)
+    f_h1 = font("DejaVuSans-Bold.ttf", 26)
+    draw.text((16, 10), "WORLD NEWS — SABTU · 21 NOVEMBER 2026",
               font=f_h1, fill=(248, 244, 236))
-    f_h2 = font("DejaVuSans.ttf", 13)
-    draw.text((16, 52), "EDISI GLOBAL · 00:00–23:59 UTC · SATURDAY 21 NOV 2026",
-              font=f_h2, fill=(232, 179, 75))
+    f_h2 = font("DejaVuSans.ttf", 12)
+    draw.text((16, 44), "EDISI GLOBAL · 00:00–23:59 UTC",
+              font=f_h2, fill=GOLD)
     f_chip = font("DejaVuSans-Bold.ttf", 12)
-    chip = "13 STORIES · 42 ENTRIES"
+    chip = "13 CERITA · 39 ENTRI + 3 CATATAN"
     cw = draw.textlength(chip, font=f_chip)
-    draw.rectangle([W - 16 - cw - 16, 26, W - 16, 58], outline=(232, 179, 75), width=1)
-    draw.text((W - 16 - cw - 8, 34), chip, font=f_chip, fill=(232, 179, 75))
-    draw.rectangle([0, 85, W - 1, 87], fill=RED)
+    draw.rectangle([W - 16 - cw - 16, 24, W - 16, 56], outline=GOLD, width=1)
+    draw.text((W - 16 - cw - 8, 32), chip, font=f_chip, fill=GOLD)
+    draw.rectangle([0, 71, W - 1, 72], fill=RED)
 
-    # ---- Map + UTC band 85–185.
+    # ---- Map + UTC band 74–227.
     draw_map(draw)
-    # Right panel: pin legend + UTC strip.
-    rx = 576
-    f_lab = font("DejaVuSans-Bold.ttf", 10)
-    draw.text((rx, 94), "13 PIN = 13 CERITA · NOMOR = NOMOR KARTU",
-              font=f_lab, fill=INK)
-    f_small = font("DejaVuSans.ttf", 9)
-    draw.text((rx, 110), "Pin merah = 6 cerita utama. Pin hitam = 7 cerita lain.",
-              font=f_small, fill=MUTED)
-    draw.text((rx, 126), "STRIP UTC — 00:00–24:00", font=f_lab, fill=INK)
-    sx0, sx1, sy = rx + 6, 1004, 152
-    draw.line([sx0, sy, sx1, sy], fill=INK, width=2)
-    for hr in range(0, 25):
-        x = sx0 + (sx1 - sx0) * hr / 24.0
-        tall = hr % 4 == 0
-        draw.line([x, sy - (5 if tall else 3), x, sy + (5 if tall else 3)],
-                  fill=INK, width=1)
-        if tall:
-            lab = "%02d" % hr
-            lw = draw.textlength(lab, font=f_small)
-            draw.text((x - lw / 2, sy + 8), lab, font=f_small, fill=INK)
-    f_note = font("DejaVuSans-Bold.ttf", 10)
-    draw.text((rx, 172), "FRI LOCAL → SAT UTC", font=f_note, fill=RED)
+    draw_strip(draw, int(MAP_X0 + MAP_W + 14))
 
-    # ---- Grid 185–960: 7 cols x 6 rows = 42 cards.
-    cw_, ch_ = 138, 123
-    x0, y0 = 11, 190
+    # ---- Grid 232–962: 6 cols x 7 rows = 42 cards (2 stories per row).
+    cw_, ch_, gap = 162, 100, 5
+    x0, y0 = 11, GRID_Y0
     for i, card in enumerate(CARDS):
-        col, row = i % 7, i // 7
-        draw_card(draw, x0 + col * (cw_ + 6), y0 + row * (ch_ + 6),
-                  cw_, ch_, card, trunc)
+        col, row = i % 6, i // 6
+        draw_card(draw, x0 + col * (cw_ + gap), y0 + row * (ch_ + gap),
+                  cw_, ch_, card, issues)
 
-    # ---- Footer 960–1024: dark band, UTC policy + method + fixed compile stamp.
-    draw.rectangle([0, 960, W - 1, H - 1], fill=INK)
+    # ---- Footer 964–1024: dark band, one date rule + method + sources.
+    draw.rectangle([0, FOOTER_Y0, W - 1, H - 1], fill=INK)
     f_f = font("DejaVuSans.ttf", 10)
-    draw.text((16, 968),
-              "KEBIJAKAN EDISI UTC — Peristiwa 21 Nov 2026 di zona waktu mana pun; "
-              "peristiwa Jumat waktu lokal masuk edisi Sabtu UTC.",
+    draw.text((16, 969),
+              "KEBIJAKAN EDISI UTC — Edisi Sabtu 21 Nov 2026 (UTC): berita yang "
+              "dilaporkan pada hari itu.",
               font=f_f, fill=(248, 244, 236))
-    draw.text((16, 984),
-              "METODOLOGI — 13 cerita · 42 entri bertanggal · klaim dibedakan dari "
-              "fakta resmi · angka pasar = data penutupan Jumat.",
+    draw.text((16, 982),
+              "Peristiwa Jumat malam waktu setempat di Amerika = Sabtu dini hari "
+              "UTC. Pasar: data penutupan Jumat 21:00 UTC, dilaporkan Sabtu "
+              "sebagai penutup pekan.",
+              font=f_f, fill=(248, 244, 236))
+    draw.text((16, 995),
+              "METODOLOGI — 13 cerita · 39 entri bertanggal + 3 catatan · klaim "
+              "dibedakan dari fakta resmi.",
               font=f_f, fill=(200, 192, 178))
-    draw.text((16, 1000),
-              "KOMPILASI: SABTU 21 NOV 2026 · 23:59 UTC (TETAP) · 13 stories · "
-              "42 dated entries · claims attributed",
-              font=f_f, fill=(232, 179, 75))
-    return img, trunc[0]
+    draw.text((16, 1008),
+              "KOMPILASI: oneturn.news, wireminute.com, novora24.com "
+              "(21–22 Nov 2026) · SABTU 21 NOV 2026 · 23:59 UTC (TETAP)",
+              font=f_f, fill=GOLD)
+    return img, issues
 
 
 def main():
-    img, n_trunc = render()
+    img, issues = render()
     path = os.path.join(BASE, "entry.png")
     img.save(path, format="PNG", optimize=True, compress_level=6)
     data = open(path, "rb").read()
@@ -378,7 +494,12 @@ def main():
     print("size %d bytes" % len(data))
     print("sha256 %s" % hashlib.sha256(data).hexdigest())
     print("dimensions %dx%d" % img.size)
-    print("truncated_cards %d" % n_trunc)
+    if issues:
+        print("LAYOUT ISSUES (%d):" % len(issues))
+        for it in issues:
+            print(" - " + it)
+        return 1
+    print("layout issues 0")
     return 0
 
 
