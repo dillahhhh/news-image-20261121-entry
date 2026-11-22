@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.7 (brief rev8.7).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.8 (brief rev8.8).
+
+v8.8 = polish atas v8.7 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 2 micro-fix huruf (brief rev8.8) — TANPA ubah geometri:
+- A1 badan #23 "Kuorum" -> "kuorum" (K -> k; kata umum huruf kecil).
+- A2 badan #34 "laga" -> "Laga" (l -> L; defensif — "l" kecil nyaris
+  identik dgn "I" kapital di DejaVu 16px; "Laga" berkaki jelas).
 
 v8.7 = polish atas v8.6 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 1 micro-fix teks (brief rev8.7) — TANPA ubah geometri:
@@ -64,7 +70,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_7 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_8 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
