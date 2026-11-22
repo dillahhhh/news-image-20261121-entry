@@ -16,6 +16,10 @@ v7 = polish atas v6 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 - header "7 KATEGORI"; footer sumber PRIMER + aturan tanggal (brief #20/#21).
 - audit angka: semua angka dicek ulang vs brief + file riset (brief #23).
 
+v7.1 (fix kecil atas v7): #7 "8 luka, tanpa tewas" (Indeci balance 21 Nov,
+terverifikasi parent); #5 badan naik ke 16px (3 baris, SEC_H 134,
+GAP_LS/GAP_SG 3 — total tetap 1024).
+
 Keputusan geometri (diukur dgn lebar PIL asli, bukan hitung karakter):
 - meta format: "N TAG . 21 NOV . SRC" tanpa kurung [ ] (tag tetap berwarna)
   + dot grup; jam HH:MM TIDAK di meta (hanya di strip, berlabel) karena
@@ -62,12 +66,12 @@ TAG_STYLE = {
 HEADER_H = 50
 STRIP_H = 40
 LEAD_H = 128
-SEC_H = 128
+SEC_H = 134
 FOOTER_H = 24
 GAP_HS = 4      # header -> strip
 GAP_SL = 4      # strip -> lead
-GAP_LS = 6      # lead -> secondary
-GAP_SG = 6      # secondary -> grid
+GAP_LS = 3      # lead -> secondary (v7.1: -3 demi SEC_H 134)
+GAP_SG = 3      # secondary -> grid (v7.1: -3 demi SEC_H 134)
 GAP_GF = 4      # grid -> footer
 GRID_ROWS = [82, 82, 82, 82, 104, 104, 82]
 GRID_GAP = 2
@@ -278,7 +282,9 @@ def draw_lead(draw, x, y):
     draw_map(draw, mx, y, mw, LEAD_H)
 
 def draw_secondary(draw, x, y):
-    """5 kartu sekunder #2-6 (w 194, judul 24px, isi 14px)."""
+    """5 kartu sekunder #2-6 (w 194, judul 24px, isi 14px — kecuali #5:
+    isi 16px, 3 baris (v7.1: lantai font rev7; 'Myanmar' dihapus dari
+    badan karena sudah di judul 'ICJ: Myanmar Bersalah')."""
     for i, s in enumerate(STORIES[1:6]):
         cx = x + i * (SEC_W + SEC_GAP)
         draw.rectangle([cx, y, cx + SEC_W - 1, y + SEC_H - 1],
@@ -289,12 +295,13 @@ def draw_secondary(draw, x, y):
         assert len(tl) <= 2, f"judul sekunder #{s[0]} {len(tl)} baris"
         for j, ln in enumerate(tl):
             draw.text((cx + 6, y + 20 + j * 26), ln, font=tf, fill=INK)
-        bf = f(14)
+        bf = f(16) if s[0] == 5 else f(14)
         bl = wrap(s[3], bf, SEC_W - 12, draw)
         max_body = 3 if s[0] == 5 else 2
         assert len(bl) <= max_body, f"body sekunder #{s[0]} {len(bl)} baris"
+        lh = 19 if s[0] == 5 else 17
         for j, ln in enumerate(bl):
-            draw.text((cx + 6, y + 74 + j * 17), ln, font=bf, fill=INK)
+            draw.text((cx + 6, y + 74 + j * lh), ln, font=bf, fill=INK)
 
 def draw_regular(draw, x, y):
     """28 kartu reguler #7-34, grid 4 kolom; baris 4-5 tinggi 104px."""

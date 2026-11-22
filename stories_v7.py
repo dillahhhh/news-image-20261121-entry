@@ -8,8 +8,9 @@
 #   13px pada lebar meta (190/235px); keduanya dikredit di footer sumber.
 #   Singkatan meta: Middle East Eye->MEE, InfoLiveScore->ILS, Al Jazeera->AJ,
 #   TechCrunch->TC. Tag di meta tanpa kurung [ ] (geometri 13px).
-# #7 Peru: "8 luka" TIDAK terkonfirmasi di file riset mana pun -> fallback
-#   badan lama "tanpa korban" (rev6-brief: tanpa korban/kerusakan).
+# #7 Peru: "8 luka, tanpa tewas" TERVERIFIKASI parent 22 Nov (Indeci balance
+#   21 Nov, dikutip RPP + 2+ media; gempa 21 Nov 00:09 UTC) — ganti badan
+#   lama "tanpa korban" (8 luka = ada korban luka).
 # #28: "~04:00" DIHAPUS (strip klaim "HANYA JAM TERVERIFIKASI").
 # #6: klausa SEC dihapus (tag [DATA] dipertahankan hanya tanpa klaim SEC).
 # #13: tag DATA -> KLAIM (studi belum peer-review). #19: RESMI -> KLAIM.
@@ -30,14 +31,14 @@ STORIES = [
      "Fosil dicoret draf; larut Sabtu hampir deal.",
      "RESMI", None, 30.7, 36.9, None),
     (5, "GLOBAL", "ICJ: Myanmar Bersalah",
-     "9-6; genosida pertama; ganti rugi menyusul; Myanmar menolak.",
+     "9-6; genosida pertama; ganti rugi menyusul; menolak.",
      "RESMI", None, 96.0, 21.0, "ICJ"),
     (6, "AMERIKA UTARA", "Pasar Anjlok -3,7%",
      "S&P 500 -3,7%, Nasdaq -5,3%; Nvidia -14%.",
      "DATA", "21:00", -74.0, 40.7, "Equiti"),
     # 7–12 — REGULER
     (7, "AMERIKA LATIN", "Gempa M6,7 Junin",
-     "M6,7 ~108 km; terasa di Lima; tanpa korban.",
+     "M6,7 ~108 km; terasa di Lima; 8 luka, tanpa tewas.",
      "BERSELISIH", "00:09", -75.0, -11.0, "USGS"),
     (8, "TIMUR TENGAH", "Tanker Terbakar",
      "~8 mil utara Khasab; ranjau vs proyektil, 0 korban.",
