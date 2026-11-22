@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.6 (brief rev8.6).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.7 (brief rev8.7).
+
+v8.7 = polish atas v8.6 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 1 micro-fix teks (brief rev8.7) — TANPA ubah geometri:
+- A1 badan #17 "Pangan, emisi, mobilitas 100 ribu pemuda/thn." ->
+  "Pangan, emisi & mobilitas 100 ribu pemuda/thn." (tetap 2 baris
+  208/175px @16px; data v8.7).
 
 v8.6 = polish atas v8.5 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 4 micro-fix teks (brief rev8.6) — TANPA ubah geometri:
@@ -58,7 +64,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_6 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_7 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
