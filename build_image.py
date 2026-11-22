@@ -1,5 +1,25 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.9 (brief rev8.9).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.10 (brief rev8.10).
+
+v8.10 = polish atas v8.9 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 6 item (brief rev8.10) — TANPA ubah geometri:
+- A1 TUKAR LEAD: #1 <-> #5 (judul, badan, tag, grup, lon, lat, sumber;
+  NOMOR tetap). #1 baru ICJ: judul 459,0px @36 bold (<=620); badan 2 baris
+  (551/214px @16, wrap 620). #5 baru Iran padat: judul 2 baris (139/140px
+  @24 bold, wrap 182); badan 4 baris (155/150/138/139px @16, wrap 182),
+  end=140 TEPAT di batas — LOLOS, ukur ulang sebelum commit. Kicker lead
+  "LEAD · GLOBAL · [RESMI] · 21 NOV 2026 · ICJ" (298,9px @12 bold <=620).
+  Pin peta ikut nomor: pin #1 (merah) ke Myanmar (96,0/21,0), pin #5 ke
+  Bahrain (50,5/26,2) — tanpa ubah kode peta (jarak pin 66,4px >= 20).
+- A2 h1 "BERITA DUNIA 21 NOV 2026 — 34 CERITA, 7 TOPIK" (845,0px @30 bold);
+  h2 "SABTU, 21 NOV 2026 · 6 LOKASI UTAMA · 5 JAM KEJADIAN TERVERIFIKASI ·
+  SEMUA BERITA BERTANGGAL" (724,1px @14).
+- A3 badan #3 tambah "Meksiko:" + "AS" (3 baris 168/171/41px @16).
+- A4 badan #4 tambah "Iklim PBB:" (3 baris 179/132/101px @16).
+- A5 badan #22 "'not good'" -> "'tidak baik'" (2 baris 176/234px @16,
+  wrap 235 — margin 1,4px, LOLOS).
+
+v8.9 = polish atas v8.8 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 
 v8.9 = polish atas v8.8 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 5 micro-fix teks (brief rev8.9) — TANPA ubah geometri:
@@ -79,7 +99,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_9 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_10 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
@@ -326,12 +346,12 @@ def draw_meta(draw, s, x, y, card_w):
     return mt
 
 def draw_header(draw):
-    h1 = "BERITA DUNIA — 34 DATE-CHECKED STORIES, 7 TOPIK"
+    h1 = "BERITA DUNIA 21 NOV 2026 — 34 CERITA, 7 TOPIK"
     assert tw(draw, h1, f(30, True)) <= 990, "h1 terlalu lebar"
     draw.text((MARGIN, 1), h1, font=f(30, True), fill=INK)
     # h2 HURUF BESAR SEMUA (tanpa descender — memberi ruang utk legenda tag)
     # v8.1 (B2): Bahasa Indonesia penuh.
-    h2 = ("SABTU · 21 NOVEMBER 2026 · STRIP UTC · PETA PIN · TAG KEPASTIAN "
+    h2 = ("SABTU, 21 NOV 2026 · 6 LOKASI UTAMA · 5 JAM KEJADIAN TERVERIFIKASI "
           "· SEMUA BERITA BERTANGGAL")
     assert tw(draw, h2, f(14)) <= 990, "h2 terlalu lebar"
     draw.text((MARGIN, 29), h2, font=f(14), fill=MUTED)
@@ -359,7 +379,7 @@ def draw_lead(draw, x, y):
     draw.rectangle([x, y, x + LEAD_W - 1, y + LEAD_H - 1],
                    outline=BORDER, width=1, fill=WHITE)
     px = x + 12
-    kicker = "LEAD · TIMUR TENGAH · [KLAIM] · 21 NOV 2026 · AJ"
+    kicker = "LEAD · GLOBAL · [RESMI] · 21 NOV 2026 · ICJ"
     assert tw(draw, kicker, f(12, True)) <= LEAD_W - 24, "kicker lead lebar"
     draw.text((px, y + 12), kicker, font=f(12, True), fill=RED)
     title = s[2]
