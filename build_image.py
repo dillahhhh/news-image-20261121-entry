@@ -1,418 +1,373 @@
 #!/usr/bin/env python3
-"""news-image-20261121 — BUILD-TIME renderer v6 (NOT run by the grader).
+"""Render entry.png 1024x1024 — news-image-20261121 v7 (brief rev7).
 
-REBUILD editorial (brief rev6, 22 Nov 14:00 WIB "perbaiki sampe menang 12"):
-v5 kalah (judge 894.469, 4-1-7, #13.134/14.816) karena 42 kartu ternyata
-cuma 13 cerita, font 13/11/9px tak terbaca, tanpa hierarki, peta + strip UTC
-cuma hiasan, sinyal verifikasi tak terlihat. v6 (konsensus 10 otak, REBUILD):
-- 34 cerita, 1 kartu = 1 cerita; hierarki 3 tingkat (1 lead 36px + 5 sekunder
-  22px + 28 reguler 20px/14px); header menjual cakupan.
-- Border kartu NETRAL; identitas region = titik warna kecil + pin peta.
-- Peta besar (panel lead) + strip UTC full-width, HANYA jam terverifikasi.
-- Tanpa kartu filler/meta di grid; legenda + metodologi di footer.
-- Layout ditegakkan kode: judul/badan yang melanggar batas baris = exit 1.
+v7 = polish atas v6 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). Perubahan vs v6 (brief rev7, 23 perbaikan):
+- fakta+tag #1-15 (Nigeria >=24 tewas, #12 "target", #6 tanpa klausa SEC,
+  #5 kualifikasi ICJ, #13 [KLAIM] + Wolbachia, #19 [KLAIM], #14 judul
+  "Hipotesis Riemann", #16 aktor Houthi, #23 "DPR AS", #29 "Denmark Usir
+  Atase Rusia", #27/#26 judul lawan, #20/#28 tanpa "~04:00").
+- meta tiap kartu: tanggal "21 NOV" + source tag (brief #16/#22).
+- tipografi: judul reguler 20px, isi reguler 16px, judul sekunder 24px,
+  judul lead 36px, meta 13px, pin 12px bold (brief #17).
+- peta: HANYA 6 pin (6 cerita teratas), crop+zoom 1.53x, dot 16px (brief #18).
+- strip UTC: hanya jam terverifikasi, label "SABTU 21 NOV (UTC)",
+  gempa Peru 00:09 (brief #19). Tanpa rollover 21->22 (gempa 21 Nov 00:09 UTC).
+- header "7 KATEGORI"; footer sumber PRIMER + aturan tanggal (brief #20/#21).
+- audit angka: semua angka dicek ulang vs brief + file riset (brief #23).
 
-Seperti v5, file ini HANYA jalan di build-time (Pillow lokal). Grader TIDAK
-pernah menjalankannya: main.py stdlib-only, hanya menyalin entry.png.
-
-Run locally:  python3 build_image.py
-No randomness, no clock, no network. Re-running writes identical bytes.
+Keputusan geometri (diukur dgn lebar PIL asli, bukan hitung karakter):
+- meta format: "N TAG . 21 NOV . SRC" tanpa kurung [ ] (tag tetap berwarna)
+  + dot grup; jam HH:MM TIDAK di meta (hanya di strip, berlabel) karena
+  "HH:MM + sumber + 21 NOV" tak muat di 13px pada lebar meta.
+- singkatan sumber meta: MEE / ILS / AJ / TC (footer menulis nama penuh).
+- tanpa source tag di meta: #1 #3 #9 #10 #11 #13 (tak ada outlet primer),
+  #4 (Majik, agregator, tak muat 190px), #8 (UKMTO tak muat 235px).
+- baris grid 4 dan 5 lebih tinggi (104px) karena judul #26 dan #29 dua baris.
+- strip 40px tanpa label angka jam (ruler + legenda peristiwa berlabel waktu).
+- body dipangkas ke 1 kalimat / 2 baris pada 16px (lihat stories_v7.py);
+  yang dipangkas dilaporkan ke parent, bukan disembunyikan.
 """
-import hashlib
-import os
-import sys
-
 from PIL import Image, ImageDraw, ImageFont
-
+import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v6 import STORIES, GROUP_COLOR, GROUP_ORDER, PINS_V6
+from stories_v7 import STORIES, PINS_V7, GROUP_COLOR, GROUP_ORDER, SRC_SHORT
 
 W, H = 1024, 1024
-BASE = os.path.dirname(os.path.abspath(__file__))
+OUT = "/tmp/entry-v7.png" if os.environ.get("V7_DEV") else "entry.png"
 
-PAPER = (248, 244, 236)
-CARD_BG = (255, 253, 248)
-INK = (25, 23, 19)
-MUTED = (107, 101, 90)
-RULE = (201, 194, 178)
-RED = (176, 42, 30)
-GREEN = (30, 107, 52)
-GREEN_TINT = (222, 238, 226)
-AMBER = (138, 94, 0)
-AMBER_TINT = (247, 235, 205)
-PURPLE = (107, 45, 143)
-PURPLE_TINT = (238, 226, 245)
-ORANGE = (168, 74, 20)
-ORANGE_TINT = (248, 232, 219)
-BLUE = (29, 78, 137)
-BLUE_TINT = (222, 233, 245)
-GREY_TINT = (236, 233, 226)
-GOLD = (232, 179, 75)
+# ---- palet ----
+PAPER = (250, 248, 243)
+INK = (17, 24, 39)
+MUTED = (107, 114, 128)
+BORDER = (209, 213, 219)
+WHITE = (255, 255, 255)
+BLUE = (37, 99, 235)
+RED = (220, 38, 38)
+GREEN = (22, 163, 74)
+SKY = (2, 132, 199)
+AMBER = (217, 119, 6)
+PURPLE = (124, 58, 237)
+CYAN = (8, 145, 178)
 
 TAG_STYLE = {
-    "RESMI": (GREEN, GREEN_TINT),
-    "KLAIM": (AMBER, AMBER_TINT),
-    "BANTAH": (PURPLE, PURPLE_TINT),
-    "BERSELISIH": (ORANGE, ORANGE_TINT),
-    "DATA": (BLUE, BLUE_TINT),
-    "INFO": (MUTED, GREY_TINT),
+    "RESMI": (GREEN, (220, 252, 231)),
+    "DATA": (BLUE, (219, 234, 254)),
+    "KLAIM": (AMBER, (254, 243, 199)),
+    "BERSELISIH": (RED, (254, 226, 226)),
+    "BANTAH": (PURPLE, (237, 233, 254)),
 }
 
-# Land mask (v5, tak berubah): (row, col_start, col_end) grid 72x28, 5 deg.
-LAND = [
-    (0, 12, 20), (0, 24, 32), (0, 38, 42),
-    (1, 4, 8), (1, 12, 22), (1, 24, 31), (1, 40, 43), (1, 45, 71),
-    (2, 3, 9), (2, 11, 23), (2, 26, 30), (2, 32, 32), (2, 40, 42), (2, 44, 71),
-    (3, 4, 9), (3, 10, 24), (3, 32, 32), (3, 39, 43), (3, 44, 71),
-    (4, 5, 10), (4, 10, 26), (4, 35, 35), (4, 39, 42), (4, 43, 71),
-    (5, 11, 27), (5, 34, 35), (5, 38, 40), (5, 42, 71),
-    (6, 12, 28), (6, 34, 44), (6, 48, 71),
-    (7, 14, 28), (7, 35, 44), (7, 48, 58), (7, 60, 68), (7, 69, 70),
-    (8, 14, 28), (8, 35, 44), (8, 46, 58), (8, 60, 68), (8, 69, 70),
-    (9, 15, 27), (9, 35, 44), (9, 45, 52), (9, 56, 66), (9, 69, 69),
-    (10, 16, 26), (10, 35, 44), (10, 46, 51), (10, 55, 60), (10, 62, 66), (10, 68, 68),
-    (11, 16, 22), (11, 27, 27), (11, 35, 45), (11, 47, 51), (11, 55, 60), (11, 62, 66),
-    (12, 17, 21), (12, 24, 27), (12, 36, 46), (12, 56, 59), (12, 62, 66),
-    (13, 18, 21), (13, 37, 47), (13, 57, 58), (13, 62, 65),
-    (14, 19, 21), (14, 26, 30), (14, 38, 47), (14, 63, 65),
-    (15, 26, 31), (15, 39, 46), (15, 63, 68),
-    (16, 27, 31), (16, 39, 45), (16, 64, 69),
-    (17, 27, 32), (17, 40, 45), (17, 65, 70),
-    (18, 28, 33), (18, 40, 44), (18, 66, 69), (18, 70, 71),
-    (19, 29, 34), (19, 40, 44), (19, 47, 47), (19, 65, 70),
-    (20, 30, 35), (20, 40, 44), (20, 47, 47), (20, 64, 70),
-    (21, 30, 35), (21, 40, 43), (21, 64, 69),
-    (22, 31, 35), (22, 40, 42), (22, 65, 68), (22, 71, 71),
-    (23, 31, 34), (23, 40, 41), (23, 65, 67), (23, 70, 71),
-    (24, 31, 33), (24, 70, 71),
-    (25, 31, 32), (25, 70, 70),
-    (26, 31, 32),
-    (27, 31, 31),
-]
+# ---- geometri (px) ----
+HEADER_H = 50
+STRIP_H = 40
+LEAD_H = 128
+SEC_H = 128
+FOOTER_H = 24
+GAP_HS = 4      # header -> strip
+GAP_SL = 4      # strip -> lead
+GAP_LS = 6      # lead -> secondary
+GAP_SG = 6      # secondary -> grid
+GAP_GF = 4      # grid -> footer
+GRID_ROWS = [82, 82, 82, 82, 104, 104, 82]
+GRID_GAP = 2
+LEAD_W = 644
+SEC_W = 194
+SEC_GAP = 5
+GRID_W = 243
+GRID_GAP_X = 2
+MARGIN = 17
 
-# Geometri v6 (px). Header 0-68 | strip 72-126 | lead+map 130-268 |
-# sekunder 274-386 | grid 392-988 (7 baris x 80, gap 6) | footer 994-1024.
-HEADER_H = 68
-STRIP_Y0, STRIP_Y1 = 72, 126
-LEAD_Y0, LEAD_H = 130, 138
-SEC_Y0, SEC_H = 274, 112
-GRID_Y0, GRID_H = 392, 596
-FOOTER_Y0 = 994
-MAP_X0, MAP_W = 663, 344
-MAP_K = 0.95  # px/derajat; peta 342 x 128 di dalam panel 344 x 138
+# ---- posisi y (dihitung, total harus 1024) ----
+Y_HEADER = 0
+Y_STRIP = Y_HEADER + HEADER_H + GAP_HS          # 54
+Y_LEAD = Y_STRIP + STRIP_H + GAP_SL             # 98
+Y_SEC = Y_LEAD + LEAD_H + GAP_LS                # 232
+Y_GRID = Y_SEC + SEC_H + GAP_SG                 # 366
+Y_FOOTER = Y_GRID + sum(GRID_ROWS) + 6 * GRID_GAP + GAP_GF  # 1000
+assert Y_FOOTER + FOOTER_H == 1024, Y_FOOTER
 
+# ---- peta dot-matrix (dipakai v1-v6; baris 0..15, kolom 12..58 di-crop) ----
+LAND = [(0, 13, 14), (0, 31, 33), (1, 10, 12), (1, 17, 20), (1, 31, 38),
+        (1, 50, 51), (2, 10, 15), (2, 17, 21), (2, 28, 35), (2, 50, 52),
+        (3, 10, 13), (3, 16, 17), (3, 29, 33), (3, 48, 52),
+        (4, 9, 11), (4, 14, 17), (4, 28, 31), (4, 46, 49),
+        (5, 8, 10), (5, 15, 17), (5, 26, 31), (5, 42, 44), (5, 46, 47),
+        (5, 49, 50), (6, 8, 9), (6, 14, 16), (6, 26, 28), (6, 43, 44),
+        (6, 48, 49), (7, 6, 9), (7, 15, 16), (7, 25, 26), (7, 44, 45),
+        (7, 48, 50), (8, 6, 8), (8, 14, 16), (8, 26, 27), (8, 45, 46),
+        (9, 5, 7), (9, 15, 16), (9, 25, 26), (9, 46, 47),
+        (10, 5, 7), (10, 15, 17), (10, 25, 27), (10, 47, 48),
+        (11, 5, 6), (11, 15, 16), (11, 25, 28), (11, 47, 48),
+        (12, 5, 6), (12, 25, 29), (12, 47, 48), (13, 25, 29),
+        (14, 26, 29), (15, 26, 28)]
 
-def font(name, size):
-    return ImageFont.truetype(os.path.join(BASE, "fonts", name), size)
+# ---- font (DejaVu, satu-satunya di fonts/) ----
+BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
 
+def f(size, bold=False):
+    name = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
+    return ImageFont.truetype(os.path.join(BASE, name), size)
 
-def wrap(draw, text, fnt, max_w):
-    """Greedy word wrap by pixel width; returns list of lines."""
-    lines, cur = [], ""
-    for word in text.split(" "):
-        trial = word if not cur else cur + " " + word
-        if draw.textlength(trial, font=fnt) <= max_w:
-            cur = trial
+def tw(draw, text, font):
+    return draw.textlength(text, font=font)
+
+def wrap(text, font, width, draw):
+    """Bungkus teks ke <=width; kembalikan list baris (kata utuh)."""
+    words, lines, cur = text.split(), [], ""
+    for w_ in words:
+        t = (cur + " " + w_).strip()
+        if tw(draw, t, font) <= width or not cur:
+            cur = t
         else:
-            if cur:
-                lines.append(cur)
-            cur = word
+            lines.append(cur)
+            cur = w_
     if cur:
         lines.append(cur)
     return lines
 
+# ---- peta: crop lon -120..110, lat 0..80, K=1.45 (1.53x vs v6) ----
+MAP_K = 1.45
+MAP_LON0, MAP_LON1, MAP_LAT1 = -120, 110, 80   # lat bawah 0
+MAP_W = int((MAP_LON1 - MAP_LON0) * MAP_K)     # 333
+MAP_H = int(MAP_LAT1 * MAP_K)                  # 116
 
-def draw_map(draw, x0, y0, issues):
-    """Panel peta: daratan titik-titik + 21 pin bernomor (leader line bila nudge)."""
-    by_num = {s[0]: s for s in STORIES}
-    # Daratan: grid 72x28, 5 deg/sel, K=0.95 -> 342 x 128 px.
+def map_xy(lon, lat, ox, oy):
+    return (ox + (lon - MAP_LON0) * MAP_K, oy + (MAP_LAT1 - lat) * MAP_K)
+
+def draw_map(draw, x, y, w, h):
+    """Panel peta: dot-matrix darat + 6 pin (dot 16px, angka 12px bold)."""
+    ox = x + (w - MAP_W) // 2
+    oy = y + (h - MAP_H) // 2
+    # darat: kolom 12..58, baris 0..15 (crop jendela)
     for row, c0, c1 in LAND:
-        y = y0 + (row + 0.5) * 5 * MAP_K
-        for c in range(c0, c1 + 1):
-            x = x0 + (c + 0.5) * 5 * MAP_K
-            draw.ellipse([x - 1.4, y - 1.4, x + 1.4, y + 1.4], fill=(105, 98, 84))
-    f_pin = font("DejaVuSans-Bold.ttf", 8)
-    for num, dx, dy in PINS_V6:
-        s = by_num[num]
-        lon, lat = s[6], s[7]
-        tx = x0 + (lon + 180.0) * MAP_K
-        ty = y0 + (80 - lat) * MAP_K
-        x, y = tx + dx, ty + dy
-        if dx or dy:
-            draw.line([tx, ty, x, y], fill=MUTED, width=1)
-            draw.ellipse([tx - 1.5, ty - 1.5, tx + 1.5, ty + 1.5], fill=RED)
-        fill = GROUP_COLOR[s[1]]
-        draw.ellipse([x - 5.5, y - 5.5, x + 5.5, y + 5.5], fill=fill,
-                     outline=(255, 253, 248), width=1)
-        if num == 1:
-            draw.ellipse([x - 7.5, y - 7.5, x + 7.5, y + 7.5], outline=RED, width=2)
-        label = str(num)
-        tw = draw.textlength(label, font=f_pin)
-        draw.text((x - tw / 2, y - 4.5), label, font=f_pin, fill=(255, 253, 248))
-    # Cek tabrakan pin (pusat < 11 px = badge bersentuhan).
+        if row > 15:
+            continue
+        for c in range(max(c0, 12), min(c1, 58) + 1):
+            cx = ox + (c - 12 + 0.5) * 5 * MAP_K
+            cy = oy + (row + 0.5) * 5 * MAP_K
+            draw.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=(148, 163, 184))
+    # garis bingkai peta
+    draw.rectangle([ox - 3, oy - 3, ox + MAP_W + 3, oy + MAP_H + 3],
+                   outline=BORDER, width=1)
+    # pin: hanya 6 cerita teratas (PINS_V7)
     pts = []
-    for num, dx, dy in PINS_V6:
-        s = by_num[num]
-        pts.append((num, x0 + (s[6] + 180.0) * MAP_K + dx,
-                    y0 + (80 - s[7]) * MAP_K + dy))
+    for num, dx, dy in PINS_V7:
+        s = next(t for t in STORIES if t[0] == num)
+        px, py = map_xy(s[6], s[7], ox, oy)
+        px, py = px + dx, py + dy
+        pts.append((num, px, py, GROUP_COLOR[s[1]]))
+    # cek tabrakan pin (halo r10 -> pusat min 20px)
     for i in range(len(pts)):
         for j in range(i + 1, len(pts)):
             d = ((pts[i][1] - pts[j][1]) ** 2 + (pts[i][2] - pts[j][2]) ** 2) ** 0.5
-            if d < 11:
-                issues.append("pin %s dan %s berjarak %.1f px" % (pts[i][0], pts[j][0], d))
+            assert d >= 20, f"pin #{pts[i][0]} dan #{pts[j][0]} tabrakan ({d:.1f}px)"
+    for num, px, py, col in pts:
+        draw.ellipse([px - 10, py - 10, px + 10, py + 10], fill=WHITE)
+        draw.ellipse([px - 8, py - 8, px + 8, py + 8], fill=col)
+        if num == 1:
+            draw.ellipse([px - 11, py - 11, px + 11, py + 11],
+                         outline=RED, width=2)
+        t = str(num)
+        tf = f(12, True)
+        draw.text((px - tw(draw, t, tf) / 2, py - 6), t, font=tf, fill=WHITE)
+    return pts
 
+# ---- strip UTC: hanya 5 jam terverifikasi (brief #19) ----
+# sumbu 27 jam: Jumat 21:00 UTC -> Sabtu 24:00 UTC.
+STRIP_EVENTS = [  # (label, jam_dari_Jumat_21_00, warna)
+    ("21:00 Wall St tutup", 0.0, GREEN),
+    ("00:09 gempa Peru", 3.15, GREEN),
+    ("03:23 Harden 51 poin", 6.38, BLUE),
+    ("15:00 Leeds KO", 18.0, RED),
+    ("17:30 Newcastle KO", 20.5, RED),
+]
 
-def draw_strip(draw):
-    """Strip UTC full-width: JUM 21:00 -> SAB 24:00 (27 jam). Hanya jam terverifikasi."""
-    f_lab = font("DejaVuSans-Bold.ttf", 12)
-    f_small = font("DejaVuSans.ttf", 11)
-    draw.text((17, 76), "STRIP UTC — JUM 21:00 → SAB 24:00",
-              font=f_lab, fill=INK)
-    leg = "HANYA JAM TERVERIFIKASI · PIN PETA = NOMOR KARTU"
-    lw = draw.textlength(leg, font=f_small)
-    draw.text((1007 - lw, 77), leg, font=f_small, fill=MUTED)
-    sx0, sx1, sy = 17, 1007, 100
+def draw_strip(draw, y):
+    x0, x1 = MARGIN, W - MARGIN
+    title = "STRIP UTC — SABTU 21 NOV (UTC)"
+    draw.text((x0, y + 3), title, font=f(12, True), fill=INK)
+    right = "HANYA JAM TERVERIFIKASI · 6 PIN = 6 CERITA TERATAS"
+    draw.text((x1 - tw(draw, right, f(11, True)), y + 4), right,
+              font=f(11, True), fill=MUTED)
+    axis_y = y + 24
+    # garis sumbu + tick tiap jam (tanpa label angka; legenda membawa waktu)
+    draw.line([(x0, axis_y), (x1, axis_y)], fill=BORDER, width=2)
+    for h in range(28):
+        tx = x0 + (x1 - x0) * h / 27.0
+        draw.line([(tx, axis_y - 3), (tx, axis_y + 3)], fill=BORDER, width=1)
+    for label, h, col in STRIP_EVENTS:
+        tx = x0 + (x1 - x0) * h / 27.0
+        draw.line([(tx, axis_y - 7), (tx, axis_y + 7)], fill=col, width=3)
+        draw.ellipse([tx - 3, axis_y - 3, tx + 3, axis_y + 3], fill=col)
+    legend = " · ".join(l for l, _, _ in STRIP_EVENTS)
+    draw.text((x0, y + 28), legend, font=f(11), fill=MUTED)
 
-    def x_at(h):
-        return sx0 + (sx1 - sx0) * h / 27.0
+# ---- meta per kartu (brief #16/#22) ----
+# Format: dot grup + "N TAG · 21 NOV · SRC" (13px bold, tanpa kurung [ ]).
+# TAG berwarna; "21 NOV" tinta; SRC (singkatan) abu. Jam HH:MM tidak di meta
+# (hanya di strip, berlabel) — tak muat di 13px pada lebar meta.
+def meta_segments(s):
+    num, group, title, body, tag, t, lon, lat, src = s
+    segs = [(str(num) + " ", f(13, True), INK),
+            (tag, f(13, True), TAG_STYLE[tag][0]),
+            (" · 21 NOV", f(13, True), INK)]
+    if src:
+        segs.append((" · " + SRC_SHORT.get(src, src), f(13, True), MUTED))
+    return segs
 
-    # Rentang gempa Peru: Sabtu 00:00-05:00 UTC (Jumat malam waktu setempat).
-    rx0, rx1 = x_at(3), x_at(8)
-    draw.rectangle([rx0, 91, rx1, 97], fill=GREEN_TINT, outline=GREEN, width=1)
-    # Ruler + tick jam.
-    draw.line([sx0, sy, sx1, sy], fill=INK, width=2)
-    for h in range(0, 28):
-        x = x_at(h)
-        tall = h in (0, 3, 7, 11, 15, 19, 23, 27)
-        draw.line([x, sy - (5 if tall else 3), x, sy + (5 if tall else 3)],
-                  fill=INK, width=1)
-    for h, lab in [(0, "JUM 21"), (3, "00"), (7, "04"), (11, "08"),
-                   (15, "12"), (19, "16"), (23, "20"), (27, "24")]:
-        x = x_at(h)
-        lw2 = draw.textlength(lab, font=f_small)
-        ax = min(max(x - lw2 / 2, sx0), sx1 - lw2)
-        draw.text((ax, sy + 4), lab, font=f_small, fill=INK)
-    # Tick berwarna untuk jam pasti (selain rentang Peru).
-    for h, color in [(0, GREEN), (6.38, BLUE), (7, ORANGE),
-                     (18, RED), (20.5, RED)]:
-        x = x_at(h)
-        draw.line([x, sy - 8, x, sy + 8], fill=color, width=3)
-    # Legenda jam (satu baris, 11px).
-    draw.text((17, 116),
-              "21:00 Wall St tutup · 00:00-05:00 gempa Peru · 03:23 Harden 51 poin · "
-              "~04:00 senjata otonom · 15:00 Leeds KO · 17:30 Newcastle KO",
-              font=f_small, fill=INK)
+def meta_width(draw, s):
+    return sum(tw(draw, t, fn) for t, fn, _ in meta_segments(s))
 
+def draw_meta(draw, s, x, y, inner_w, dot=True):
+    """Gambar meta; tegakkan: lebar <= inner_w dan berisi '21 NOV'."""
+    w = meta_width(draw, s)
+    assert w <= inner_w, (f"meta #{s[0]} {w:.0f}px > {inner_w}px: "
+                          f"{''.join(t for t, _, _ in meta_segments(s))}")
+    cx = x
+    if dot:
+        col = GROUP_COLOR[s[1]]
+        draw.ellipse([x, y + 2, x + 8, y + 10], fill=col)
+        cx = x + 10
+    for t, fn, col in meta_segments(s):
+        draw.text((cx, y), t, font=fn, fill=col)
+        cx += tw(draw, t, fn)
 
-SHORT_GROUP = {
-    "TIMUR TENGAH": "T. TENGAH", "EROPA": "EROPA",
-    "AMERIKA UTARA": "AM. UTARA", "AMERIKA LATIN": "AM. LATIN",
-    "ASIA-PASIFIK": "ASIA-PASIFIK", "OLAHRAGA": "OLAHRAGA", "GLOBAL": "GLOBAL",
-}
+def draw_header(draw):
+    h1 = "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 KATEGORI"
+    assert tw(draw, h1, f(30, True)) <= 990, "h1 terlalu lebar"
+    draw.text((MARGIN, 3), h1, font=f(30, True), fill=INK)
+    h2 = ("SABTU · 21 NOVEMBER 2026 · UTC strip • pin map • certainty tags "
+          "• every story dated")
+    draw.text((MARGIN, 33), h2, font=f(14), fill=MUTED)
+    draw.line([(MARGIN, 48), (W - MARGIN, 48)], fill=BORDER, width=1)
 
-
-def meta_line(draw, x, y, w, story, issues, f_meta):
-    """Baris meta: titik warna region + '# · REGION' kiri, '[TAG] · jam' kanan.
-    Jam dicantumkan hanya bila muat (strip UTC memuat semua jam pasti)."""
-    num, group, title, body, tag, t_utc = story[:6]
-    color = GROUP_COLOR[group]
-    draw.ellipse([x, y + 2, x + 8, y + 10], fill=color)
-    left = "%d · %s" % (num, SHORT_GROUP[group])
-    draw.text((x + 12, y), left, font=f_meta, fill=INK)
-    right = "[%s]" % tag
-    if t_utc:
-        trial = right + " · " + t_utc
-        if draw.textlength(left, font=f_meta) + 16 + \
-                draw.textlength(trial, font=f_meta) <= w:
-            right = trial
-    rw = draw.textlength(right, font=f_meta)
-    fg, _bg = TAG_STYLE[tag]
-    draw.text((x + w - rw, y), right, font=f_meta, fill=fg)
-    if draw.textlength(left, font=f_meta) + 16 + rw > w:
-        issues.append("card %d meta line terlalu lebar" % num)
-
-
-def draw_lead(draw, x, y, w, h, story, issues):
-    num, group, title, body, tag, t_utc = story[:6]
-    draw.rectangle([x, y, x + w - 1, y + h - 1], fill=CARD_BG, outline=RULE, width=1)
-    draw.rectangle([x, y, x + w - 1, y + 3], fill=RED)
-    px, inner = x + 14, w - 28
-    f_kick = font("DejaVuSans-Bold.ttf", 12)
-    draw.text((px, y + 12), "LEAD · %s · [%s] · 21 NOV 2026" % (group, tag),
-              font=f_kick, fill=RED)
-    f_title = font("DejaVuSans-Bold.ttf", 34)
-    lines = wrap(draw, title, f_title, inner)
-    if len(lines) > 1:
-        issues.append("lead title wraps to %d lines" % len(lines))
-        lines = lines[:1]
-    ty = y + 30
-    for ln in lines:
-        draw.text((px, ty), ln, font=f_title, fill=INK)
-        ty += 40
-    f_body = font("DejaVuSans.ttf", 16)
-    blines = wrap(draw, body, f_body, inner)
-    if len(blines) > 2:
-        issues.append("lead body wraps to %d lines" % len(blines))
-        blines = blines[:2]
-    by = ty + 4
-    for ln in blines:
-        draw.text((px, by), ln, font=f_body, fill=(52, 48, 42))
-        by += 19
-    if by > y + h - 24:
-        issues.append("lead body melampaui kartu (ends y+%d)" % (by - y))
-    # Chip metrik: 2 pangkalan, 0 korban, drone vs F-16.
-    f_chip = font("DejaVuSans-Bold.ttf", 12)
+def draw_lead(draw, x, y):
+    """Lead #1 (Iran–Bahrain) + panel peta 6 pin di kanan."""
+    s = STORIES[0]
+    assert s[0] == 1
+    draw.rectangle([x, y, x + LEAD_W - 1, y + LEAD_H - 1],
+                   outline=BORDER, width=1, fill=WHITE)
+    px = x + 12
+    kicker = "LEAD · TIMUR TENGAH · KLAIM · 21 NOV 2026"
+    draw.text((px, y + 8), kicker, font=f(12, True), fill=RED)
+    title = s[2]
+    tf = f(36, True)
+    assert tw(draw, title, tf) <= LEAD_W - 24, f"judul lead {tw(draw, title, tf):.0f}px"
+    draw.text((px, y + 22), title, font=tf, fill=INK)
+    body = s[3]
+    bf = f(16)
+    bl = wrap(body, bf, LEAD_W - 24, draw)
+    assert len(bl) <= 2, f"body lead {len(bl)} baris"
+    for i, ln in enumerate(bl):
+        draw.text((px, y + 66 + i * 19), ln, font=bf, fill=INK)
+    chips = ["2 PANGKALAN AS", "0 KORBAN", "DRONE vs F-16"]
     cx = px
-    for label in ["2 PANGKALAN AS", "0 KORBAN", "DRONE vs F-16"]:
-        cw = draw.textlength(label, font=f_chip)
-        draw.rectangle([cx - 2, y + h - 22, cx + cw + 2, y + h - 6],
-                       fill=GREY_TINT)
-        draw.text((cx, y + h - 20), label, font=f_chip, fill=RED)
-        cx += cw + 12
+    for c in chips:
+        cf = f(12, True)
+        cw = tw(draw, c, cf) + 12
+        draw.rounded_rectangle([cx, y + 106, cx + cw, y + 122], radius=4,
+                               outline=RED, width=1)
+        draw.text((cx + 6, y + 108), c, font=cf, fill=RED)
+        cx += cw + 6
+    # panel peta (kanan lead)
+    mx = x + LEAD_W + 6
+    mw = W - MARGIN - mx
+    draw.rectangle([mx, y, mx + mw - 1, y + LEAD_H - 1],
+                   outline=BORDER, width=1, fill=WHITE)
+    draw_map(draw, mx, y, mw, LEAD_H)
 
+def draw_secondary(draw, x, y):
+    """5 kartu sekunder #2-6 (w 194, judul 24px, isi 14px)."""
+    for i, s in enumerate(STORIES[1:6]):
+        cx = x + i * (SEC_W + SEC_GAP)
+        draw.rectangle([cx, y, cx + SEC_W - 1, y + SEC_H - 1],
+                       outline=BORDER, width=1, fill=WHITE)
+        draw_meta(draw, s, cx + 2, y + 5, SEC_W - 4)
+        tf = f(24, True)
+        tl = wrap(s[2], tf, SEC_W - 12, draw)
+        assert len(tl) <= 2, f"judul sekunder #{s[0]} {len(tl)} baris"
+        for j, ln in enumerate(tl):
+            draw.text((cx + 6, y + 20 + j * 26), ln, font=tf, fill=INK)
+        bf = f(14)
+        bl = wrap(s[3], bf, SEC_W - 12, draw)
+        max_body = 3 if s[0] == 5 else 2
+        assert len(bl) <= max_body, f"body sekunder #{s[0]} {len(bl)} baris"
+        for j, ln in enumerate(bl):
+            draw.text((cx + 6, y + 74 + j * 17), ln, font=bf, fill=INK)
 
-def draw_secondary(draw, x, y, w, h, story, issues):
-    num, group, title, body, tag, t_utc = story[:6]
-    draw.rectangle([x, y, x + w - 1, y + h - 1], fill=CARD_BG, outline=RULE, width=1)
-    px, inner = x + 8, w - 16
-    f_meta = font("DejaVuSans-Bold.ttf", 12)
-    meta_line(draw, px, y + 7, inner, story, issues, f_meta)
-    f_title = font("DejaVuSans-Bold.ttf", 22)
-    lines = wrap(draw, title, f_title, inner)
-    if len(lines) > 2:
-        issues.append("card %d title wraps to %d lines" % (num, len(lines)))
-        lines = lines[:2]
-    ty = y + 26
-    for ln in lines:
-        draw.text((px, ty), ln, font=f_title, fill=INK)
-        ty += 24
-    f_body = font("DejaVuSans.ttf", 14)
-    blines = wrap(draw, body, f_body, inner)
-    if len(blines) > 2:
-        issues.append("card %d body wraps to %d lines" % (num, len(blines)))
-        blines = blines[:2]
-    by = ty + 1
-    for ln in blines:
-        draw.text((px, by), ln, font=f_body, fill=(52, 48, 42))
-        by += 16
-    if by > y + h - 4:
-        issues.append("card %d body melampaui kartu (ends y+%d)" % (num, by - y))
+def draw_regular(draw, x, y):
+    """28 kartu reguler #7-34, grid 4 kolom; baris 4-5 tinggi 104px."""
+    for idx, s in enumerate(STORIES[6:]):
+        r, c = divmod(idx, 4)
+        cy = y + sum(GRID_ROWS[:r]) + r * GRID_GAP
+        cx = x + c * (GRID_W + GRID_GAP_X)
+        ch = GRID_ROWS[r]
+        draw.rectangle([cx, cy, cx + GRID_W - 1, cy + ch - 1],
+                       outline=BORDER, width=1, fill=WHITE)
+        draw_meta(draw, s, cx + 4, cy + 4, GRID_W - 8)
+        tf = f(20, True)
+        tl = wrap(s[2], tf, GRID_W - 8, draw)
+        tall = s[0] in (26, 29)
+        assert len(tl) <= (2 if tall else 1), \
+            f"judul reguler #{s[0]} {len(tl)} baris"
+        by = cy + 65 if tall else cy + 43
+        for j, ln in enumerate(tl):
+            draw.text((cx + 4, cy + 19 + j * 22), ln, font=tf, fill=INK)
+        bf = f(16)
+        bl = wrap(s[3], bf, GRID_W - 8, draw)
+        assert len(bl) <= 2, f"body reguler #{s[0]} {len(bl)} baris"
+        for j, ln in enumerate(bl):
+            draw.text((cx + 4, by + j * 18), ln, font=bf, fill=INK)
+        assert by + len(bl) * 18 <= cy + ch - 3, \
+            f"body reguler #{s[0]} meluber (y={by}, {len(bl)} baris, h={ch})"
 
-
-def draw_regular(draw, x, y, w, h, story, issues):
-    num, group, title, body, tag, t_utc = story[:6]
-    draw.rectangle([x, y, x + w - 1, y + h - 1], fill=CARD_BG, outline=RULE, width=1)
-    px, inner = x + 8, w - 16
-    f_meta = font("DejaVuSans-Bold.ttf", 12)
-    meta_line(draw, px, y + 6, inner, story, issues, f_meta)
-    f_title = font("DejaVuSans-Bold.ttf", 20)
-    lines = wrap(draw, title, f_title, inner)
-    if len(lines) > 1:
-        issues.append("card %d title wraps to %d lines: %r" % (num, len(lines), title))
-        lines = lines[:1]
-    ty = y + 22
-    for ln in lines:
-        draw.text((px, ty), ln, font=f_title, fill=INK)
-        ty += 22
-    f_body = font("DejaVuSans.ttf", 14)
-    blines = wrap(draw, body, f_body, inner)
-    if len(blines) > 2:
-        issues.append("card %d body wraps to %d lines" % (num, len(blines)))
-        blines = blines[:2]
-    by = ty + 1
-    for ln in blines:
-        draw.text((px, by), ln, font=f_body, fill=(52, 48, 42))
-        by += 16
-    if by > y + h - 3:
-        issues.append("card %d body melampaui kartu (ends y+%d)" % (num, by - y))
-
+def draw_footer(draw, y):
+    line1 = ("METODOLOGI — 34 cerita bertanggal 21 Nov 2026 (UTC); klaim "
+             "dibedakan dari fakta resmi; hanya jam terverifikasi di strip "
+             "UTC; Jumat malam setempat yg dilaporkan Sabtu = berita 21 Nov.")
+    assert tw(draw, line1, f(10)) <= 990, f"footer l1 {tw(draw, line1, f(10)):.0f}px"
+    draw.text((MARGIN, y + 2), line1, font=f(10), fill=MUTED)
+    # legenda grup (dot + nama) + daftar sumber primer (ambil yang
+    # terpanjang yang muat; yang terbuang tetap ada di meta kartu).
+    lf = f(10)
+    cx = MARGIN
+    for g in GROUP_ORDER:
+        draw.ellipse([cx, y + 14, cx + 7, y + 21], fill=GROUP_COLOR[g])
+        cx += 9
+        draw.text((cx, y + 13), g, font=lf, fill=MUTED)
+        cx += tw(draw, g, lf) + 8
+    candidates = [
+        ("SUMBER: BBC, Reuters, AP, Al Jazeera, Guardian, Equiti, UKMTO, "
+         "ICJ, USGS · skor: InfoLiveScore, theScore"),
+        ("SUMBER: BBC, Reuters, AP, Al Jazeera, Guardian, Equiti, UKMTO "
+         "· skor: InfoLiveScore"),
+        ("SUMBER: BBC, Reuters, AP, Al Jazeera, Guardian, UKMTO "
+         "· skor: InfoLiveScore"),
+    ]
+    src = next(s for s in candidates if cx + tw(draw, s, lf) <= W - MARGIN)
+    draw.text((cx, y + 13), src, font=lf, fill=MUTED)
 
 def render():
+    assert len(STORIES) == 34, f"{len(STORIES)} cerita"
+    assert [s[0] for s in STORIES] == list(range(1, 35)), "nomor kartu 1..34"
+    for s in STORIES:
+        assert s[4] in TAG_STYLE, f"tag #{s[0]} {s[4]}"
+        assert "21 NOV" in " · ".join(t for t, _, _ in meta_segments(s)), \
+            f"meta #{s[0]} tanpa 21 NOV"
     img = Image.new("RGB", (W, H), PAPER)
-    draw = ImageDraw.Draw(img)
-    issues = []
-    by_num = {s[0]: s for s in STORIES}
-    if len(STORIES) != 34:
-        issues.append("jumlah cerita %d, bukan 34" % len(STORIES))
-
-    # ---- Header 0-68: netral + aksen merah (bukan bidang merah solid).
-    f_h1 = font("DejaVuSans-Bold.ttf", 30)
-    h1 = "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 REGIONS"
-    draw.text((17, 8), h1, font=f_h1, fill=INK)
-    f_h2 = font("DejaVuSans.ttf", 14)
-    draw.text((17, 46),
-              "SABTU · 21 NOVEMBER 2026 · UTC strip • pin map • certainty tags • "
-              "every story dated",
-              font=f_h2, fill=MUTED)
-    draw.rectangle([0, HEADER_H - 2, W - 1, HEADER_H - 1], fill=RED)
-
-    # ---- Strip UTC 72-126.
-    draw_strip(draw)
-
-    # ---- Lead 130-268 (x 17-657) + panel peta (x 663-1007).
-    lead = by_num[1]
-    draw_lead(draw, 17, LEAD_Y0, 640, LEAD_H, lead, issues)
-    draw.rectangle([MAP_X0, LEAD_Y0, MAP_X0 + MAP_W - 1, LEAD_Y0 + LEAD_H - 1],
-                   fill=CARD_BG, outline=RULE, width=1)
-    map_x0 = MAP_X0 + (MAP_W - int(360 * MAP_K)) // 2
-    map_y0 = LEAD_Y0 + (LEAD_H - int(135 * MAP_K)) // 2
-    draw_map(draw, map_x0, map_y0, issues)
-
-    # ---- Sekunder 274-386: 5 kartu (cerita 2, 3, 4, 5, 6).
-    sec_w, sec_gap = 193, 6
-    for i, num in enumerate([2, 3, 4, 5, 6]):
-        draw_secondary(draw, 17 + i * (sec_w + sec_gap), SEC_Y0,
-                       sec_w, SEC_H, by_num[num], issues)
-
-    # ---- Grid reguler 392-988: 4 kolom x 7 baris = 28 kartu (cerita 7-34).
-    gw, gh, gap = 243, 80, 6
-    for i, num in enumerate(range(7, 35)):
-        col, row = i % 4, i // 4
-        draw_regular(draw, 17 + col * (gw + gap), GRID_Y0 + row * (gh + gap),
-                     gw, gh, by_num[num], issues)
-
-    # ---- Footer 994-1024: metodologi + legenda region + sumber.
-    f_f = font("DejaVuSans.ttf", 11)
-    draw.rectangle([0, FOOTER_Y0, W - 1, H - 1], fill=INK)
-    draw.text((17, 998),
-              "METODOLOGI — 34 cerita bertanggal 21 Nov 2026 (UTC); klaim dibedakan "
-              "dari fakta resmi; hanya jam terverifikasi di strip UTC.",
-              font=f_f, fill=(248, 244, 236))
-    # Legenda region: titik warna + nama.
-    lx = 17
-    for g in GROUP_ORDER:
-        draw.ellipse([lx, 1013, lx + 8, 1021], fill=GROUP_COLOR[g])
-        lx += 11
-        name = {"TIMUR TENGAH": "T. Tengah", "EROPA": "Eropa",
-                "AMERIKA UTARA": "Am. Utara",
-                "AMERIKA LATIN": "Am. Latin",
-                "ASIA-PASIFIK": "Asia-Pasifik", "OLAHRAGA": "Olahraga",
-                "GLOBAL": "Global"}[g]
-        draw.text((lx, 1012), name, font=f_f, fill=(248, 244, 236))
-        lx += draw.textlength(name, font=f_f) + 12
-    src = "KOMPILASI: oneturn.news, majikassociates.com, infolivescore.com, thescore.com"
-    sw = draw.textlength(src, font=f_f)
-    draw.text((1007 - sw, 1012), src, font=f_f, fill=GOLD)
-    return img, issues
-
-
-def main():
-    img, issues = render()
-    path = os.path.join(BASE, "entry.png")
-    img.save(path, format="PNG", optimize=True, compress_level=6)
-    data = open(path, "rb").read()
-    print("wrote %s" % path)
-    print("size %d bytes" % len(data))
-    print("sha256 %s" % hashlib.sha256(data).hexdigest())
-    print("dimensions %dx%d" % img.size)
-    if issues:
-        print("LAYOUT ISSUES (%d):" % len(issues))
-        for it in issues:
-            print(" - " + it)
-        return 1
-    print("LAYOUT OK: 0 issues")
-    return 0
-
+    d = ImageDraw.Draw(img)
+    draw_header(d)
+    draw_strip(d, Y_STRIP)
+    draw_lead(d, MARGIN, Y_LEAD)
+    draw_secondary(d, MARGIN, Y_SEC)
+    draw_regular(d, MARGIN, Y_GRID)
+    draw_footer(d, Y_FOOTER)
+    img.save(OUT)
+    import hashlib
+    data = open(OUT, "rb").read()
+    print(f"wrote {OUT} {len(data)} bytes sha256={hashlib.sha256(data).hexdigest()}")
+    print(f"size {img.size}, mode {img.mode}")
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    render()
