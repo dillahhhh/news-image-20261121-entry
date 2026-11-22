@@ -15,7 +15,7 @@ geometri sama — hanya bahasa; bos: "Coba versi Inggris" 22 Nov 22:16 WIB,
   · [FACT] · 21 NOV 2026 · ICJ" (~300px).
 - Strip/strip legend/label hari/footer line1/src2 Inggris (terukur
   parent, brief rev8.11 B). src1 TIDAK BERUBAH (961,0px).
-- Data stories_v8_13.py (baru): 34 tuple Inggris; lon/lat/time/source
+- Data stories_v8_14.py (baru): 34 tuple Inggris; lon/lat/time/source
   TIDAK berubah. #5 badan end=140 TEPAT; #19 badan baris 1 233px;
   #20 badan baris 2 232px; #26/#29 judul 2 baris + vertikal tepat
   di batas — SEMUA wajib ukur ulang + lolos assert render.
@@ -119,7 +119,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_13 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_14 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
