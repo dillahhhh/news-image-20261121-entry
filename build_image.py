@@ -1,5 +1,25 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.10 (brief rev8.10).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.11 (brief rev8.11).
+
+v8.11 = VERSI INGGRIS PENUH v8.10 (34 cerita sama, fakta sama,
+geometri sama — hanya bahasa; bos: "Coba versi Inggris" 22 Nov 22:16 WIB,
+5 besar leaderboard semuanya Inggris; v8.10 Indonesia 7-3-2, $0).
+- Tag FACT (was RESMI) — VERIFIED 8 huruf bikin 6 meta gagal, PROVEN
+  6 huruf bikin 5 meta gagal; FACT 4 huruf LOLOS semua (terukur parent).
+  CLAIM (was KLAIM), DISPUTED (was BERSELISIH), DATA tetap, BANTAH
+  tetap (tidak dipakai). Grup Inggris (MIDDLE EAST, EUROPE, NORTH
+  AMERICA, LATIN AMERICA, ASIA-PACIFIC, SPORTS, GLOBAL).
+- h1 "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 REGIONS" (956,1px @30
+  bold); h2 "SATURDAY, 21 NOV 2026 · 6 KEY LOCATIONS · 5 VERIFIED EVENT
+  TIMES · ALL STORIES DATED" (656,3px @14). Kicker lead "LEAD · GLOBAL
+  · [FACT] · 21 NOV 2026 · ICJ" (~300px).
+- Strip/strip legend/label hari/footer line1/src2 Inggris (terukur
+  parent, brief rev8.11 B). src1 TIDAK BERUBAH (961,0px).
+- Data stories_v8_11.py (baru): 34 tuple Inggris; lon/lat/time/source
+  TIDAK berubah. #5 badan end=140 TEPAT; #19 badan baris 1 233px;
+  #20 badan baris 2 232px; #26/#29 judul 2 baris + vertikal tepat
+  di batas — SEMUA wajib ukur ulang + lolos assert render.
+- TANPA ubah geometri/font/layout, main.py, README, LICENSE, owner.json.
 
 v8.10 = polish atas v8.9 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 6 item (brief rev8.10) — TANPA ubah geometri:
@@ -99,7 +119,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_10 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_11 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
@@ -120,10 +140,10 @@ PURPLE = (124, 58, 237)
 CYAN = (8, 145, 178)
 
 TAG_STYLE = {
-    "RESMI": (GREEN, (220, 252, 231)),
+    "FACT": (GREEN, (220, 252, 231)),
     "DATA": (BLUE, (219, 234, 254)),
-    "KLAIM": (AMBER, (254, 243, 199)),
-    "BERSELISIH": (RED, (254, 226, 226)),
+    "CLAIM": (AMBER, (254, 243, 199)),
+    "DISPUTED": (RED, (254, 226, 226)),
     "BANTAH": (PURPLE, (237, 233, 254)),
 }
 
@@ -264,25 +284,25 @@ def draw_map(draw, x, y, w, h):
 # Tick 21:00 = JUMAT (bukan Sabtu) — judul + label tick + legenda "JUM"
 # menegaskan hari. Legenda menautkan tiap jam ke nomor kartu (brief D).
 STRIP_EVENTS = [  # (label, jam_dari_Jumat_21_00, warna)
-    ("21:00 Wall St tutup", 0.0, GREEN),
-    ("00:09 gempa Peru", 3.15, GREEN),
-    ("03:23 Harden 51 poin", 6.38, BLUE),
+    ("21:00 Wall St closes", 0.0, GREEN),
+    ("00:09 Peru quake", 3.15, GREEN),
+    ("03:23 Harden 51 pts", 6.38, BLUE),
     ("15:00 Leeds KO", 18.0, RED),
     ("17:30 Newcastle KO", 20.5, RED),
 ]
 
 def draw_strip(draw, y):
     x0, x1 = MARGIN, W - MARGIN
-    title = "STRIP UTC — JUM 20 NOV 21:00 → SAB 21 NOV (UTC)"
+    title = "UTC STRIP — FRI 20 NOV 21:00 → SAT 21 NOV (UTC)"
     draw.text((x0, y + 2), title, font=f(12, True), fill=INK)
-    right = "HANYA JAM TERVERIFIKASI · 6 PIN = 6 CERITA TERATAS"
+    right = "ONLY VERIFIED TIMES · 6 PINS = 6 TOP STORIES"
     draw.text((x1 - tw(draw, right, f(11, True)), y + 3), right,
               font=f(11, True), fill=MUTED)
     axis_y = y + 26
     # label hari di atas sumbu, di kanan tick-nya (tick 00:09 di x0+115
     # memaksa "SAB 21 NOV" geser ke x0+125 agar tidak menabrak tick itu).
-    draw.text((x0 + 6, y + 15), "JUM 20 NOV", font=f(10, True), fill=MUTED)
-    draw.text((x0 + 125, y + 15), "SAB 21 NOV", font=f(10, True), fill=MUTED)
+    draw.text((x0 + 6, y + 15), "FRI 20 NOV", font=f(10, True), fill=MUTED)
+    draw.text((x0 + 125, y + 15), "SAT 21 NOV", font=f(10, True), fill=MUTED)
     # garis sumbu + tick tiap jam (kecil, tidak menabrak legenda)
     draw.line([(x0, axis_y), (x1, axis_y)], fill=BORDER, width=2)
     for h in range(28):
@@ -293,7 +313,7 @@ def draw_strip(draw, y):
         tx = x0 + (x1 - x0) * h / 27.0
         draw.line([(tx, axis_y - 7), (tx, axis_y)], fill=col, width=3)
         draw.ellipse([tx - 3, axis_y - 3, tx + 3, axis_y + 3], fill=col)
-    legend = ("JUM 21:00 Wall St tutup → #6 · 00:09 gempa Peru → #7 · "
+    legend = ("FRI 21:00 Wall St closes → #6 · 00:09 Peru quake → #7 · "
               "03:23 Harden → #34 · 15:00 Leeds KO → #25 · "
               "17:30 Newcastle KO → #26")
     assert tw(draw, legend, f(11)) <= 990, "legenda strip terlalu lebar"
@@ -346,24 +366,24 @@ def draw_meta(draw, s, x, y, card_w):
     return mt
 
 def draw_header(draw):
-    h1 = "BERITA DUNIA 21 NOV 2026 — 34 CERITA, 7 TOPIK"
+    h1 = "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 REGIONS"
     assert tw(draw, h1, f(30, True)) <= 990, "h1 terlalu lebar"
     draw.text((MARGIN, 1), h1, font=f(30, True), fill=INK)
     # h2 HURUF BESAR SEMUA (tanpa descender — memberi ruang utk legenda tag)
-    # v8.1 (B2): Bahasa Indonesia penuh.
-    h2 = ("SABTU, 21 NOV 2026 · 6 LOKASI UTAMA · 5 JAM KEJADIAN TERVERIFIKASI "
-          "· SEMUA BERITA BERTANGGAL")
+    # v8.11: Bahasa Inggris penuh.
+    h2 = ("SATURDAY, 21 NOV 2026 · 6 KEY LOCATIONS · 5 VERIFIED EVENT "
+          "TIMES · ALL STORIES DATED")
     assert tw(draw, h2, f(14)) <= 990, "h2 terlalu lebar"
     draw.text((MARGIN, 29), h2, font=f(14), fill=MUTED)
     # legenda tag SATU BARIS 11px, nama tag berwarna (brief E)
-    segs = [("RESMI", TAG_STYLE["RESMI"][0]),
-            (" = terkonfirmasi resmi · ", MUTED),
-            ("KLAIM", TAG_STYLE["KLAIM"][0]),
-            (" = klaim belum terverifikasi · ", MUTED),
+    segs = [("FACT", TAG_STYLE["FACT"][0]),
+            (" = officially confirmed · ", MUTED),
+            ("CLAIM", TAG_STYLE["CLAIM"][0]),
+            (" = unverified claim · ", MUTED),
             ("DATA", TAG_STYLE["DATA"][0]),
-            (" = angka/data · ", MUTED),
-            ("BERSELISIH", TAG_STYLE["BERSELISIH"][0]),
-            (" = sumber berbeda", MUTED)]
+            (" = figures/data · ", MUTED),
+            ("DISPUTED", TAG_STYLE["DISPUTED"][0]),
+            (" = sources disagree", MUTED)]
     cx = MARGIN
     for t, c in segs:
         draw.text((cx, 43), t, font=f(11), fill=c)
@@ -379,7 +399,7 @@ def draw_lead(draw, x, y):
     draw.rectangle([x, y, x + LEAD_W - 1, y + LEAD_H - 1],
                    outline=BORDER, width=1, fill=WHITE)
     px = x + 12
-    kicker = "LEAD · GLOBAL · [RESMI] · 21 NOV 2026 · ICJ"
+    kicker = "LEAD · GLOBAL · [FACT] · 21 NOV 2026 · ICJ"
     assert tw(draw, kicker, f(12, True)) <= LEAD_W - 24, "kicker lead lebar"
     draw.text((px, y + 12), kicker, font=f(12, True), fill=RED)
     title = s[2]
@@ -437,9 +457,9 @@ def draw_regular(draw, x, y):
         draw_meta(draw, s, cx + META_MARGIN, cy + 4, GRID_W)
         tf = f(20, True)
         if s[0] == 10:
-            # v8.5 A3: "Sparta II Kena Drone" dgn tracking -0,06px/celah
-            # (terukur 234,6px <= 235px). JANGAN via wrap() — wrap pakai
-            # lebar string penuh 235,4px -> 2 baris (salah).
+            # v8.11: "Drone Hits Sparta II" dgn tracking -0,06px/celah
+            # (terukur 222,8px <= 235px). JANGAN via wrap() — wrap pakai
+            # lebar string penuh -> 2 baris (salah).
             tw10 = sum(draw.textlength(c, font=tf) for c in s[2]) + TRACK10 * (len(s[2]) - 1)
             assert tw10 <= GRID_W - 8, f"judul #10 tracking {tw10:.1f}px"
             tl = [s[2]]
@@ -470,9 +490,9 @@ def draw_footer(draw, y):
     # 126,5px -> 108,3px). "Berita 21 Nov:" dipertahankan (bukan "Isi").
     # Isi utuh (34 cerita, UTC, klaim vs fakta resmi, jam strip
     # terverifikasi, aturan tanggal 20->21 Nov, pasar tutup).
-    line1 = ("METODOLOGI — 34 cerita 21 Nov 2026 (UTC); klaim ≠ fakta "
-             "resmi; jam strip terverifikasi. Berita 21 Nov: peristiwa "
-             "20 Nov yang dilaporkan 21 Nov + pasar tutup Jumat 21:00 UTC.")
+    line1 = ("METHODOLOGY — 34 stories, 21 Nov 2026 (UTC); claims ≠ "
+             "official facts; strip times verified. 21 Nov news: 20 Nov "
+             "events reported 21 Nov + markets closed Fri 21:00 UTC.")
     assert tw(draw, line1, f(11)) <= 990, f"footer l1 {tw(draw, line1, f(11)):.0f}px"
     # v8.5 A2: teks footer MUTED -> INK (kontras; MUTED global TETAP).
     draw.text((MARGIN, y + 0), line1, font=f(11), fill=INK)
@@ -496,8 +516,8 @@ def draw_footer(draw, y):
             "UPI, CBC, RFI, MEE, ICJ, USGS, UKMTO, Majik, "
             "InfoLiveScore, theScore, Straits Times, Economic Times, "
             "Truth Social")
-    src2 = ("Data pasar: Equiti via Majik · Korban gempa: INDECI · "
-            "Skor olahraga: InfoLiveScore, theScore")
+    src2 = ("Market data: Equiti via Majik · Quake victims: INDECI · "
+            "Sports scores: InfoLiveScore, theScore")
     assert tw(draw, src1, f(11)) <= 990, f"footer src1 {tw(draw, src1, f(11)):.0f}px"
     assert tw(draw, src2, f(11)) <= 990, f"footer src2 {tw(draw, src2, f(11)):.0f}px"
     draw.text((MARGIN, y + 24), src1, font=f(11), fill=INK)  # v8.5 A2
