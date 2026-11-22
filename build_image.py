@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""Render entry.png 1024x1024 — news-image-20261121 v8.5 (brief rev8.5).
+"""Render entry.png 1024x1024 — news-image-20261121 v8.6 (brief rev8.6).
 
-v8.5 = polish atas v8.4 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
-28 reguler 4x7). 3 micro-fix (brief rev8.5) — TANPA ubah geometri:
-- A1 DIBLOKIR terukur: h1 "7 CATEGORIES" = 1014,9px > 990px (lama
-  "7 KATEGORI" 974,0px) -> h1 TETAP "7 KATEGORI". Alternatif "34 DATED
-  STORIES, 7 CATEGORIES" muat (869,1px) tapi buang kata "DATE-CHECKED" —
-  TIDAK diterapkan (perubahan copy tak diotorisasi brief); dilaporkan.
-- A2 footer: teks footer (l1, nama legenda region, src1, src2) MUTED ->
-  INK (kontras maks, tanpa ubah ukuran font/geometri). MUTED global TETAP.
-- A3 judul #10 "Sparta II Kena Drone" (kapital D, data v8.5) digambar dgn
-  tracking -0,06px/celah (terukur 234,6px <= 235px; string penuh 235,4px).
-  Helper draw_tracked HANYA utk judul #10; 33 kartu lain tak tersentuh.
+v8.6 = polish atas v8.5 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
+28 reguler 4x7). 4 micro-fix teks (brief rev8.6) — TANPA ubah geometri:
+- A1 judul #23 "Proxy Voting Ilegal" -> "Voting Proksi Ilegal" (219,9px
+  <= 235px @20px bold; data v8.6). A2 badan #24 tambah "tayang" (2 baris
+  222/216px @16px; subjek DIPERTAHANKAN). A3 badan #14 "dgn" -> "dengan"
+  (tetap 3 baris 215/159/77px @16px).
+- A4 h1 "7 KATEGORI" -> "7 TOPICS" (927,8px <= 990px @30px bold) — h1
+  sepenuhnya Inggris TANPA buang "DATE-CHECKED". "7 CATEGORIES" TETAP
+  DIBLOKIR (1014,9px > 990px, terukur v8.5).
 
 v8.4 = polish atas v8.3 (34 cerita, 1 kartu = 1 cerita, lead + 5 sekunder +
 28 reguler 4x7). 1 edit footer + 1 target judul DIBLOKIR terukur — TANPA
@@ -60,7 +58,7 @@ Leading badan 17px (16px font — lantai, tidak pernah dikecilkan).
 from PIL import Image, ImageDraw, ImageFont
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from stories_v8_5 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
+from stories_v8_6 import (STORIES, PINS_V8_2, GROUP_COLOR, GROUP_ORDER,
                          SRC_SHORT, TIME_IN_META)
 
 W, H = 1024, 1024
@@ -307,7 +305,7 @@ def draw_meta(draw, s, x, y, card_w):
     return mt
 
 def draw_header(draw):
-    h1 = "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 KATEGORI"
+    h1 = "WORLD NEWS — 34 DATE-CHECKED STORIES, 7 TOPICS"
     assert tw(draw, h1, f(30, True)) <= 990, "h1 terlalu lebar"
     draw.text((MARGIN, 1), h1, font=f(30, True), fill=INK)
     # h2 HURUF BESAR SEMUA (tanpa descender — memberi ruang utk legenda tag)
