@@ -136,11 +136,11 @@ CARDS = [
     (5, "MYANMAR", "Myanmar Tolak Putusan ICJ",
      "Myanmar menolak putusan ICJ soal Rohingya.", "RESMI", True),
     (5, "MYANMAR", "ICJ: Myanmar Bersalah Genosida",
-     "Bersalah genosida atas Rohingya (Rakhine 2017); diperintah ganti rugi.",
+     "Bersalah genosida atas Rohingya; diperintah ganti rugi (besaran menyusul).",
      "RESMI", False),
     (5, "MYANMAR", "9–6, Pertama dalam Sejarah",
-     "9–6; pertama kalinya ICJ menyatakan sebuah negara melakukan genosida.",
-     "RESMI", False, 10),
+     "9–6 atas pokok genosida; pertama kalinya ICJ menyatakan negara melakukan genosida.",
+     "RESMI", False, 9),
     # 6 — Saham AI
     (6, "PASAR", "S&P -3,7%, Nasdaq -5,3%",
      "Penutupan Jumat 21:00 UTC; S&P −3,7%, Nasdaq −5,3%.", "DATA", True),
@@ -190,8 +190,8 @@ CARDS = [
     (12, "DAGANG", "Tarif 98,5% Dihapus",
      "Bea masuk dihapus hingga 98,5% pos tarif; hemat €600 jt/thn.",
      "RESMI", False),
-    (12, "DAGANG", "Berlaku 2027, Pasar 730 Juta",
-     "Berlaku awal 2027; pasar gabungan 730 juta orang.", "RESMI", False),
+    (12, "DAGANG", "Target Awal 2027, Pasar 730 Juta",
+     "Ditargetkan berlaku awal 2027; pasar gabungan 730 juta orang.", "RESMI", False),
     # 13 — Dengue Brasil
     (13, "BRASIL", "Studi: Wolbachia Tekan Dengue",
      "Nyamuk Wolbachia tekan infeksi dengue + chikungunya ~69%.",
@@ -359,8 +359,8 @@ def draw_card(draw, x, y, w, h, card, issues):
         draw.text((px, ty), ln, font=f_title, fill=INK)
         ty += 14
     # Fact: 11px, max 3 lines (summary cards S2/S3: 9px, max 5 lines).
-    # A card may carry a 7th tuple element = fact font size (v3: card 5-3
-    # needs 10px so the verbatim ICJ phrase fits in 3 lines).
+    # A card may carry a 7th tuple element = fact font size (v4: card 5-3
+    # needs 9px so the ICJ phrase + "atas pokok genosida" fits in 3 lines).
     small = story in ("S2", "S3")
     fact_px = card[6] if len(card) > 6 else (9 if small else 11)
     f_fact = font("DejaVuSans.ttf", fact_px)
